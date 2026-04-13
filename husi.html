@@ -523,9 +523,9 @@ function applySkin(skinKey) {
 }
 
 function getLobbyPetImage() {
-    if (hunger <= 100 && energy >= 35) return "ehes.png";
+    if (hunger <= 35 && energy >= 35) return "ehes.png";
     if (energy < 35) return "faradt.png";
-    if (hunger <= 100) return "ehes.png";
+    if (hunger <= 35) return "ehes.png";
     if (happy < 45) return "szomoru2.png";
     return "karakter.png";
 }
