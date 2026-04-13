@@ -243,6 +243,19 @@ body > p:nth-of-type(3) { bottom: 30px; }
     background: rgba(255, 255, 255, 0.9);
 }
 
+#roomArrow {
+    position: fixed;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 30;
+    font-size: 28px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+}
+
 #storeScreen {
     display: none;
     position: fixed;
@@ -341,6 +354,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 
 <button onclick="openGame()">Mini játék</button>
 <button id="storeArrow" onclick="openStore()" title="Store">⬅</button>
+<button id="roomArrow" onclick="toggleLobbyRoom()" title="Másik helység">➡</button>
 
 <div id="storeScreen">
     <div id="storeContent">
@@ -416,9 +430,12 @@ body > p:nth-of-type(3) { bottom: 30px; }
 
 <script>
 
+let currentLobbyRoom = "main";
+
 /* 🌙 DAY/NIGHT BACKGROUND */
 
 function updateLobbyBackground() {
+    if (currentLobbyRoom === "bathroom") return;
     let hour = new Date().getHours();
 
     if (hour >= 6 && hour < 18) {
@@ -634,7 +651,7 @@ const PLATFORM_GAP_Y = 62;
 const PLATFORM_COUNT = 11;
 const LEVEL_JUMP_STEP = 7;
 const PLATFORM_EDGE_MARGIN = 30;
-const PLATFORM_MAX_X_STEP = 55;
+const PLATFORM_X_STEP = PLATFORM_WIDTH;
 
 let platforms = [];
 let highestY = 0;
@@ -676,9 +693,11 @@ function createPlatforms() {
 function getReachablePlatformX(previousX) {
     const minX = PLATFORM_EDGE_MARGIN;
     const maxX = canvas.width - PLATFORM_WIDTH - PLATFORM_EDGE_MARGIN;
-    const nextMin = Math.max(minX, previousX - PLATFORM_MAX_X_STEP);
-    const nextMax = Math.min(maxX, previousX + PLATFORM_MAX_X_STEP);
-    return nextMin + Math.random() * (nextMax - nextMin);
+    const goRight = Math.random() > 0.5;
+    const directionalX = previousX + (goRight ? PLATFORM_X_STEP : -PLATFORM_X_STEP);
+    if (directionalX < minX) return previousX + PLATFORM_X_STEP;
+    if (directionalX > maxX) return previousX - PLATFORM_X_STEP;
+    return directionalX;
 }
 
 function setLobbyPetVisible(isVisible) {
@@ -750,15 +769,11 @@ document.addEventListener("keydown", (e) => {
     if (!gameRunning) return;
 
     if (e.key === "Escape") {
-        gamePaused = true;
-        document.getElementById("pauseText").style.display = "flex";
-        return;
-    }
-
-    if (e.code === "Space" && gamePaused) {
-        gamePaused = false;
-        document.getElementById("pauseText").style.display = "none";
-        requestAnimationFrame(updateGame);
+        gamePaused = !gamePaused;
+        document.getElementById("pauseText").style.display = gamePaused ? "flex" : "none";
+        if (!gamePaused) {
+            requestAnimationFrame(updateGame);
+        }
         return;
     }
 
@@ -848,6 +863,49 @@ updateBars();
 updateCoinsUI();
 applySkin(currentSkin);
 updateLobbyPetState();
+
+function playRoomFade(onMidpoint) {
+    const fade = document.getElementById("fade");
+    fade.style.display = "block";
+    fade.style.opacity = "0";
+
+    requestAnimationFrame(() => {
+        fade.style.opacity = "1";
+        setTimeout(() => {
+            onMidpoint();
+            fade.style.opacity = "0";
+            setTimeout(() => {
+                fade.style.display = "none";
+            }, 500);
+        }, 500);
+    });
+}
+
+function applyLobbyRoomVisuals() {
+    const roomArrow = document.getElementById("roomArrow");
+    const storeArrow = document.getElementById("storeArrow");
+
+    if (currentLobbyRoom === "bathroom") {
+        document.body.style.backgroundImage = "url('furdo.jpeg')";
+        roomArrow.innerText = "⬅";
+        roomArrow.title = "Vissza a lobbyba";
+        storeArrow.style.display = "none";
+    } else {
+        updateLobbyBackground();
+        roomArrow.innerText = "➡";
+        roomArrow.title = "Másik helység";
+        storeArrow.style.display = "block";
+    }
+}
+
+function toggleLobbyRoom() {
+    if (gameRunning) return;
+    playRoomFade(() => {
+        currentLobbyRoom = currentLobbyRoom === "main" ? "bathroom" : "main";
+        applyLobbyRoomVisuals();
+        updateLobbyPetState();
+    });
+}
 
 setInterval(() => {
     const inactiveSeconds = (Date.now() - lastCareAt) / 1000;
