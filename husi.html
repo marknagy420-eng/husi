@@ -31,6 +31,9 @@ button {
     margin: 5px;
     padding: 10px;
     font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #8f7a63;
+    cursor: pointer;
 }
 
 .bar {
@@ -200,6 +203,39 @@ body > p:nth-of-type(3) { bottom: 30px; }
     pointer-events: none;
     transition: opacity 0.5s ease;
 }
+
+#shopPanel {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #b08a65;
+    border-radius: 12px;
+    padding: 12px;
+    width: 250px;
+    text-align: left;
+    z-index: 20;
+}
+
+#coinDisplay {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.shopItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+#shopMessage {
+    margin-top: 8px;
+    min-height: 20px;
+    color: #734d2f;
+    font-size: 14px;
+}
 </style>
 </head>
 
@@ -240,6 +276,25 @@ body > p:nth-of-type(3) { bottom: 30px; }
 <br>
 
 <button onclick="openGame()">Mini játék</button>
+
+<div id="shopPanel">
+    <h3>🛒 Shop</h3>
+    <div id="coinDisplay">💰 Coin: 0</div>
+
+    <div class="shopItem">
+        <span>🍖 Kaja (+20 éhség)</span>
+        <button onclick="buyItem('food')">80</button>
+    </div>
+    <div class="shopItem">
+        <span>🎾 Játék (+20 boldogság)</span>
+        <button onclick="buyItem('toy')">100</button>
+    </div>
+    <div class="shopItem">
+        <span>⚡ Pihi ital (+20 energia)</span>
+        <button onclick="buyItem('energy')">90</button>
+    </div>
+    <div id="shopMessage"></div>
+</div>
 
 <div id="gameOverlay">
     <canvas id="game"></canvas>
@@ -330,11 +385,53 @@ function startGame() {
 let hunger = 100;
 let happy = 100;
 let energy = 100;
+let coins = 0;
+
+const SHOP_ITEMS = {
+    food: { name: "🍖 Kaja", cost: 80, stat: "hunger", amount: 20 },
+    toy: { name: "🎾 Játék", cost: 100, stat: "happy", amount: 20 },
+    energy: { name: "⚡ Pihi ital", cost: 90, stat: "energy", amount: 20 }
+};
 
 function updateBars() {
     document.getElementById("hunger").style.width = hunger + "px";
     document.getElementById("happy").style.width = happy + "px";
     document.getElementById("energy").style.width = energy + "px";
+}
+
+function updateCoinsUI() {
+    document.getElementById("coinDisplay").innerText = `💰 Coin: ${coins}`;
+}
+
+function clampStats() {
+    hunger = Math.max(0, Math.min(200, hunger));
+    happy = Math.max(0, Math.min(200, happy));
+    energy = Math.max(0, Math.min(200, energy));
+}
+
+function showShopMessage(text) {
+    document.getElementById("shopMessage").innerText = text;
+}
+
+function buyItem(itemKey) {
+    const item = SHOP_ITEMS[itemKey];
+    if (!item) return;
+
+    if (coins < item.cost) {
+        showShopMessage("Nincs elég coinod ehhez.");
+        return;
+    }
+
+    coins -= item.cost;
+
+    if (item.stat === "hunger") hunger += item.amount;
+    if (item.stat === "happy") happy += item.amount;
+    if (item.stat === "energy") energy += item.amount;
+
+    clampStats();
+    updateBars();
+    updateCoinsUI();
+    showShopMessage(`${item.name} megvéve!`);
 }
 
 /* A lobby #lobbyPet statikus dekoráció, a mozgás csak a canvas játékoson történik. */
@@ -363,6 +460,7 @@ let jumpPower = -12;
 
 let platforms = [];
 let highestY = 0;
+let runMaxHeight = 0;
 
 function createPlatforms() {
     platforms = [];
@@ -406,6 +504,7 @@ function openGame() {
     };
 
     highestY = player.y;
+    runMaxHeight = 0;
 
     createPlatforms();
 
@@ -414,6 +513,10 @@ function openGame() {
 
 function gameOver() {
     gameRunning = false;
+    const earned = Math.max(10, Math.floor(runMaxHeight / 60));
+    coins += earned;
+    updateCoinsUI();
+    showShopMessage(`+${earned} coin a mini játékból!`);
     document.getElementById("gameOverScreen").style.display = "block";
 }
 
@@ -465,6 +568,7 @@ function updateGame() {
         }
 
         highestY += diff;
+        runMaxHeight += diff;
     }
 
     for (let p of platforms) {
@@ -493,6 +597,7 @@ function updateGame() {
 }
 
 updateBars();
+updateCoinsUI();
 
 </script>
 
