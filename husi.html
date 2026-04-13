@@ -98,6 +98,17 @@ body > p:nth-of-type(3) { bottom: 30px; }
     display: block;
 }
 
+#gameHud {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 25;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
 /* GAME OVER */
 #gameOverScreen {
     display: none;
@@ -369,6 +380,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 </div>
 
 <div id="gameOverlay">
+    <div id="gameHud">Level 1 • Ugrás: 0</div>
     <canvas id="game"></canvas>
 </div>
 
@@ -602,27 +614,42 @@ let player = { x: 200, y: 200, vy: 0, size: 50 };
 
 let gravity = 0.35;
 let jumpPower = -12;
+const PLATFORM_WIDTH = 140;
+const PLATFORM_GAP_Y = 72;
+const PLATFORM_COUNT = 11;
+const LEVEL_JUMP_STEP = 30;
 
 let platforms = [];
 let highestY = 0;
 let runMaxHeight = 0;
+let jumpCount = 0;
+let level = 1;
+let lastLandedPlatformId = null;
+let nextPlatformId = 0;
+
+function updateGameHud() {
+    document.getElementById("gameHud").innerText = `Level ${level} • Ugrás: ${jumpCount}`;
+}
 
 function createPlatforms() {
     platforms = [];
+    nextPlatformId = 0;
 
     let startY = canvas.height - 80;
 
     platforms.push({
-        x: canvas.width / 2 - 60,
+        id: nextPlatformId++,
+        x: canvas.width / 2 - PLATFORM_WIDTH / 2,
         y: startY,
-        w: 120
+        w: PLATFORM_WIDTH
     });
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 1; i < PLATFORM_COUNT; i++) {
         platforms.push({
-            x: 50 + Math.random() * (canvas.width - 150),
-            y: startY - i * 90,
-            w: 110
+            id: nextPlatformId++,
+            x: 30 + Math.random() * (canvas.width - PLATFORM_WIDTH - 60),
+            y: startY - i * PLATFORM_GAP_Y,
+            w: PLATFORM_WIDTH
         });
     }
 }
@@ -650,8 +677,12 @@ function openGame() {
 
     highestY = player.y;
     runMaxHeight = 0;
+    jumpCount = 0;
+    level = 1;
+    lastLandedPlatformId = null;
 
     createPlatforms();
+    updateGameHud();
 
     updateGame();
 }
@@ -731,6 +762,22 @@ function updateGame() {
         ) {
             player.y = p.y - player.size;
             player.vy = jumpPower;
+            if (lastLandedPlatformId !== p.id) {
+                jumpCount++;
+                level = Math.floor(jumpCount / LEVEL_JUMP_STEP) + 1;
+                lastLandedPlatformId = p.id;
+                updateGameHud();
+            }
+        }
+    }
+
+    for (let p of platforms) {
+        if (p.y > canvas.height + 20) {
+            const currentTopY = Math.min(...platforms.map(platform => platform.y));
+            p.id = nextPlatformId++;
+            p.y = currentTopY - PLATFORM_GAP_Y;
+            p.x = 30 + Math.random() * (canvas.width - PLATFORM_WIDTH - 60);
+            p.w = PLATFORM_WIDTH;
         }
     }
 
