@@ -591,6 +591,7 @@ function updateLobbyPetState() {
     if (!lobbyPet.src.endsWith(nextSrc)) {
         lobbyPet.src = nextSrc;
     }
+    lobbyPet.style.top = currentLobbyRoom === "bathroom" ? "38vh" : "56vh";
     applySkin(currentSkin);
 }
 
