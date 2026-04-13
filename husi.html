@@ -109,6 +109,21 @@ body > p:nth-of-type(3) { bottom: 30px; }
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
+/* PAUSE */
+#pauseText {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    color: white;
+    font-size: 64px;
+    font-weight: bold;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 3px 8px rgba(0,0,0,0.9);
+    background: rgba(0,0,0,0.35);
+}
+
 /* GAME OVER */
 #gameOverScreen {
     display: none;
@@ -365,11 +380,13 @@ body > p:nth-of-type(3) { bottom: 30px; }
             </div>
             <div class="storeCard">
                 <h4>😎 Cool skin</h4>
+                <img src="coolskin.png" alt="Cool skin" style="width:70px;height:70px;display:block;margin-bottom:8px;">
                 <p>150 coin</p>
                 <button onclick="buyStoreItem('coolSkin')">Megveszem / használom</button>
             </div>
             <div class="storeCard">
                 <h4>🔥 Legend skin</h4>
+                <img src="legendary.png" alt="Legendary skin" style="width:70px;height:70px;display:block;margin-bottom:8px;">
                 <p>250 coin</p>
                 <button onclick="buyStoreItem('legendSkin')">Megveszem / használom</button>
             </div>
@@ -381,6 +398,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 
 <div id="gameOverlay">
     <div id="gameHud">Level 1 • Ugrás: 0</div>
+    <div id="pauseText">PAUSE</div>
     <canvas id="game"></canvas>
 </div>
 
@@ -485,6 +503,11 @@ const STORE_ITEMS = {
 const ownedSkins = new Set(["default"]);
 let currentSkin = "default";
 let currentRenderFilter = "none";
+const SKIN_IMAGE_MAP = {
+    default: "karakter.png",
+    cool: "coolskin.png",
+    legend: "legendary.png"
+};
 
 function updateBars() {
     document.getElementById("hunger").style.width = hunger + "px";
@@ -520,18 +543,9 @@ function closeStore() {
 
 function applySkin(skinKey) {
     const lobbyPet = document.getElementById("lobbyPet");
-    if (skinKey === "default") {
-        lobbyPet.style.filter = "none";
-        currentRenderFilter = "none";
-    }
-    if (skinKey === "cool") {
-        lobbyPet.style.filter = "hue-rotate(120deg) saturate(1.4)";
-        currentRenderFilter = "hue-rotate(120deg) saturate(1.4)";
-    }
-    if (skinKey === "legend") {
-        lobbyPet.style.filter = "hue-rotate(280deg) saturate(1.8) brightness(1.1)";
-        currentRenderFilter = "hue-rotate(280deg) saturate(1.8) brightness(1.1)";
-    }
+    currentRenderFilter = "none";
+    lobbyPet.style.filter = "none";
+    charImg.src = SKIN_IMAGE_MAP[skinKey] || SKIN_IMAGE_MAP.default;
 }
 
 function getLobbyPetImage() {
@@ -603,6 +617,7 @@ let canvas = document.getElementById("game");
 let ctx = canvas.getContext("2d");
 
 let gameRunning = false;
+let gamePaused = false;
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -614,12 +629,12 @@ let player = { x: 200, y: 200, vy: 0, size: 50 };
 
 let gravity = 0.35;
 let jumpPower = -12;
-const PLATFORM_WIDTH = 140;
+const PLATFORM_WIDTH = 70;
 const PLATFORM_GAP_Y = 62;
 const PLATFORM_COUNT = 11;
-const LEVEL_JUMP_STEP = 30;
+const LEVEL_JUMP_STEP = 7;
 const PLATFORM_EDGE_MARGIN = 30;
-const PLATFORM_MAX_X_STEP = 110;
+const PLATFORM_MAX_X_STEP = 55;
 
 let platforms = [];
 let highestY = 0;
@@ -679,6 +694,8 @@ function openGame() {
     resize();
 
     gameRunning = true;
+    gamePaused = false;
+    document.getElementById("pauseText").style.display = "none";
 
     player = {
         x: canvas.width / 2,
@@ -701,10 +718,9 @@ function openGame() {
 
 function gameOver() {
     gameRunning = false;
-    const earned = Math.max(10, Math.floor(runMaxHeight / 60));
-    coins += earned;
-    updateCoinsUI();
-    showStoreMessage(`+${earned} coin a mini játékból!`);
+    gamePaused = false;
+    document.getElementById("pauseText").style.display = "none";
+    showStoreMessage("A futam véget ért.");
     document.getElementById("gameOverScreen").style.display = "block";
 }
 
@@ -716,6 +732,8 @@ function backToMenu() {
     document.getElementById("gameOverlay").style.display = "none";
     document.getElementById("gameOverScreen").style.display = "none";
     gameRunning = false;
+    gamePaused = false;
+    document.getElementById("pauseText").style.display = "none";
     setLobbyPetVisible(true);
 }
 
@@ -723,11 +741,28 @@ function quitGame() {
     document.getElementById("gameOverlay").style.display = "none";
     document.getElementById("gameOverScreen").style.display = "none";
     gameRunning = false;
+    gamePaused = false;
+    document.getElementById("pauseText").style.display = "none";
     setLobbyPetVisible(true);
 }
 
 document.addEventListener("keydown", (e) => {
     if (!gameRunning) return;
+
+    if (e.key === "Escape") {
+        gamePaused = true;
+        document.getElementById("pauseText").style.display = "flex";
+        return;
+    }
+
+    if (e.code === "Space" && gamePaused) {
+        gamePaused = false;
+        document.getElementById("pauseText").style.display = "none";
+        requestAnimationFrame(updateGame);
+        return;
+    }
+
+    if (gamePaused) return;
 
     if (e.key === "ArrowLeft") player.x -= 18;
     if (e.key === "ArrowRight") player.x += 18;
@@ -742,7 +777,7 @@ function drawBackground() {
 }
 
 function updateGame() {
-    if (!gameRunning) return;
+    if (!gameRunning || gamePaused) return;
 
     drawBackground();
 
@@ -776,6 +811,8 @@ function updateGame() {
             player.vy = jumpPower;
             if (lastLandedPlatformId !== p.id) {
                 jumpCount++;
+                coins += 1;
+                updateCoinsUI();
                 level = Math.floor(jumpCount / LEVEL_JUMP_STEP) + 1;
                 lastLandedPlatformId = p.id;
                 updateGameHud();
@@ -821,7 +858,7 @@ setInterval(() => {
         happy -= 0.08;
     }
 
-    if (gameRunning) {
+    if (gameRunning && !gamePaused) {
         hunger -= 0.25 + activityScore * 0.02;
         energy -= 0.3 + activityScore * 0.04;
         activityScore = Math.max(0, activityScore - 0.6);
