@@ -384,9 +384,15 @@ function createPlatforms() {
     }
 }
 
+function setLobbyPetVisible(isVisible) {
+    const lobbyPet = document.getElementById("lobbyPet");
+    lobbyPet.style.display = isVisible ? "block" : "none";
+}
+
 function openGame() {
     document.getElementById("gameOverlay").style.display = "block";
     document.getElementById("gameOverScreen").style.display = "none";
+    setLobbyPetVisible(false);
 
     resize();
 
@@ -419,12 +425,14 @@ function backToMenu() {
     document.getElementById("gameOverlay").style.display = "none";
     document.getElementById("gameOverScreen").style.display = "none";
     gameRunning = false;
+    setLobbyPetVisible(true);
 }
 
 function quitGame() {
     document.getElementById("gameOverlay").style.display = "none";
     document.getElementById("gameOverScreen").style.display = "none";
     gameRunning = false;
+    setLobbyPetVisible(true);
 }
 
 document.addEventListener("keydown", (e) => {
