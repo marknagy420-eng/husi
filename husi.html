@@ -204,37 +204,75 @@ body > p:nth-of-type(3) { bottom: 30px; }
     transition: opacity 0.5s ease;
 }
 
-#shopPanel {
+#storeArrow {
     position: fixed;
-    right: 20px;
-    top: 20px;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 30;
+    font-size: 28px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
     background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #b08a65;
-    border-radius: 12px;
-    padding: 12px;
-    width: 250px;
-    text-align: left;
-    z-index: 20;
 }
 
-#coinDisplay {
-    font-weight: bold;
-    margin-bottom: 8px;
+#storeScreen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(35, 24, 15, 0.92);
+    color: white;
+    overflow-y: auto;
 }
 
-.shopItem {
+#storeContent {
+    max-width: 820px;
+    margin: 32px auto;
+    background: rgba(255, 255, 255, 0.12);
+    border: 2px solid #d8b48a;
+    border-radius: 14px;
+    padding: 18px;
+}
+
+#storeTop {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    margin: 6px 0;
+    margin-bottom: 12px;
 }
 
-#shopMessage {
-    margin-top: 8px;
-    min-height: 20px;
-    color: #734d2f;
-    font-size: 14px;
+#storeCoinDisplay {
+    font-weight: bold;
+}
+
+.storeGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.storeCard {
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid #dbbb95;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: left;
+}
+
+.storeCard h4 {
+    margin: 0 0 8px;
+}
+
+.storeCard p {
+    margin: 0 0 10px;
+}
+
+#storeMessage {
+    min-height: 22px;
+    margin-top: 12px;
+    color: #ffe2c1;
 }
 </style>
 </head>
@@ -276,24 +314,58 @@ body > p:nth-of-type(3) { bottom: 30px; }
 <br>
 
 <button onclick="openGame()">Mini játék</button>
+<button id="storeArrow" onclick="openStore()" title="Store">⬅</button>
 
-<div id="shopPanel">
-    <h3>🛒 Shop</h3>
-    <div id="coinDisplay">💰 Coin: 0</div>
+<div id="storeScreen">
+    <div id="storeContent">
+        <div id="storeTop">
+            <h2>🛒 Store</h2>
+            <div>
+                <span id="storeCoinDisplay">💰 Coin: 0</span>
+                <button onclick="closeStore()">Vissza a lobbyba</button>
+            </div>
+        </div>
 
-    <div class="shopItem">
-        <span>🍖 Kaja (+20 éhség)</span>
-        <button onclick="buyItem('food')">80</button>
+        <h3>Fogyóeszközök</h3>
+        <div class="storeGrid">
+            <div class="storeCard">
+                <h4>🍖 Kaja</h4>
+                <p>+20 éhség</p>
+                <button onclick="buyStoreItem('food')">80 coin</button>
+            </div>
+            <div class="storeCard">
+                <h4>🎾 Játék</h4>
+                <p>+20 boldogság</p>
+                <button onclick="buyStoreItem('toy')">100 coin</button>
+            </div>
+            <div class="storeCard">
+                <h4>⚡ Energy ital</h4>
+                <p>+20 energia</p>
+                <button onclick="buyStoreItem('energy')">90 coin</button>
+            </div>
+        </div>
+
+        <h3>Skinek</h3>
+        <div class="storeGrid">
+            <div class="storeCard">
+                <h4>🐶 Alap skin</h4>
+                <p>Ingyenes</p>
+                <button onclick="buyStoreItem('defaultSkin')">Használom</button>
+            </div>
+            <div class="storeCard">
+                <h4>😎 Cool skin</h4>
+                <p>150 coin</p>
+                <button onclick="buyStoreItem('coolSkin')">Megveszem / használom</button>
+            </div>
+            <div class="storeCard">
+                <h4>🔥 Legend skin</h4>
+                <p>250 coin</p>
+                <button onclick="buyStoreItem('legendSkin')">Megveszem / használom</button>
+            </div>
+        </div>
+
+        <div id="storeMessage"></div>
     </div>
-    <div class="shopItem">
-        <span>🎾 Játék (+20 boldogság)</span>
-        <button onclick="buyItem('toy')">100</button>
-    </div>
-    <div class="shopItem">
-        <span>⚡ Pihi ital (+20 energia)</span>
-        <button onclick="buyItem('energy')">90</button>
-    </div>
-    <div id="shopMessage"></div>
 </div>
 
 <div id="gameOverlay">
@@ -387,11 +459,18 @@ let happy = 100;
 let energy = 100;
 let coins = 0;
 
-const SHOP_ITEMS = {
+const STORE_ITEMS = {
     food: { name: "🍖 Kaja", cost: 80, stat: "hunger", amount: 20 },
     toy: { name: "🎾 Játék", cost: 100, stat: "happy", amount: 20 },
-    energy: { name: "⚡ Pihi ital", cost: 90, stat: "energy", amount: 20 }
+    energy: { name: "⚡ Pihi ital", cost: 90, stat: "energy", amount: 20 },
+    defaultSkin: { name: "🐶 Alap skin", type: "skin", cost: 0, skin: "default" },
+    coolSkin: { name: "😎 Cool skin", type: "skin", cost: 150, skin: "cool" },
+    legendSkin: { name: "🔥 Legend skin", type: "skin", cost: 250, skin: "legend" }
 };
+
+const ownedSkins = new Set(["default"]);
+let currentSkin = "default";
+let currentRenderFilter = "none";
 
 function updateBars() {
     document.getElementById("hunger").style.width = hunger + "px";
@@ -400,7 +479,7 @@ function updateBars() {
 }
 
 function updateCoinsUI() {
-    document.getElementById("coinDisplay").innerText = `💰 Coin: ${coins}`;
+    document.getElementById("storeCoinDisplay").innerText = `💰 Coin: ${coins}`;
 }
 
 function clampStats() {
@@ -409,16 +488,56 @@ function clampStats() {
     energy = Math.max(0, Math.min(200, energy));
 }
 
-function showShopMessage(text) {
-    document.getElementById("shopMessage").innerText = text;
+function showStoreMessage(text) {
+    document.getElementById("storeMessage").innerText = text;
 }
 
-function buyItem(itemKey) {
-    const item = SHOP_ITEMS[itemKey];
+function openStore() {
+    document.getElementById("storeScreen").style.display = "block";
+}
+
+function closeStore() {
+    document.getElementById("storeScreen").style.display = "none";
+}
+
+function applySkin(skinKey) {
+    const lobbyPet = document.getElementById("lobbyPet");
+    if (skinKey === "default") {
+        lobbyPet.style.filter = "none";
+        currentRenderFilter = "none";
+    }
+    if (skinKey === "cool") {
+        lobbyPet.style.filter = "hue-rotate(120deg) saturate(1.4)";
+        currentRenderFilter = "hue-rotate(120deg) saturate(1.4)";
+    }
+    if (skinKey === "legend") {
+        lobbyPet.style.filter = "hue-rotate(280deg) saturate(1.8) brightness(1.1)";
+        currentRenderFilter = "hue-rotate(280deg) saturate(1.8) brightness(1.1)";
+    }
+}
+
+function buyStoreItem(itemKey) {
+    const item = STORE_ITEMS[itemKey];
     if (!item) return;
 
+    if (item.type === "skin") {
+        if (!ownedSkins.has(item.skin)) {
+            if (coins < item.cost) {
+                showStoreMessage("Nincs elég coinod ehhez.");
+                return;
+            }
+            coins -= item.cost;
+            ownedSkins.add(item.skin);
+        }
+        currentSkin = item.skin;
+        applySkin(currentSkin);
+        updateCoinsUI();
+        showStoreMessage(`${item.name} aktiválva.`);
+        return;
+    }
+
     if (coins < item.cost) {
-        showShopMessage("Nincs elég coinod ehhez.");
+        showStoreMessage("Nincs elég coinod ehhez.");
         return;
     }
 
@@ -431,7 +550,7 @@ function buyItem(itemKey) {
     clampStats();
     updateBars();
     updateCoinsUI();
-    showShopMessage(`${item.name} megvéve!`);
+    showStoreMessage(`${item.name} megvéve!`);
 }
 
 /* A lobby #lobbyPet statikus dekoráció, a mozgás csak a canvas játékoson történik. */
@@ -516,7 +635,7 @@ function gameOver() {
     const earned = Math.max(10, Math.floor(runMaxHeight / 60));
     coins += earned;
     updateCoinsUI();
-    showShopMessage(`+${earned} coin a mini játékból!`);
+    showStoreMessage(`+${earned} coin a mini játékból!`);
     document.getElementById("gameOverScreen").style.display = "block";
 }
 
@@ -591,13 +710,16 @@ function updateGame() {
         gameOver();
     }
 
+    ctx.filter = currentRenderFilter;
     ctx.drawImage(charImg, player.x, player.y, player.size, player.size);
+    ctx.filter = "none";
 
     requestAnimationFrame(updateGame);
 }
 
 updateBars();
 updateCoinsUI();
+applySkin(currentSkin);
 
 </script>
 
