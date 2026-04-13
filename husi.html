@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<title>Zsömle</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #f2e6d9;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    transition: background-image 1s ease;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+#pet {
+    width: 140px;
+}
+
+button {
+    margin: 5px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.bar {
+    height: 10px;
+    background: white;
+    width: 200px;
+}
+
+/* 🔥 BAL ALSÓ HUD */
+#hunger, #happy, #energy {
+    margin: 3px 0;
+}
+
+#hunger::before,
+#happy::before,
+#energy::before {
+    display: block;
+    margin-bottom: 2px;
+}
+
+/* konténer hack */
+#hunger, #happy, #energy {
+    position: relative;
+}
+
+body > p, 
+body > .bar {
+    text-align: left;
+}
+
+body > p:nth-of-type(1),
+#hunger,
+body > p:nth-of-type(2),
+#happy,
+body > p:nth-of-type(3),
+#energy {
+    position: fixed;
+    left: 20px;
+}
+
+/* konkrét pozik */
+body > p:nth-of-type(1) { bottom: 110px; }
+#hunger { bottom: 145px; }
+
+body > p:nth-of-type(2) { bottom: 70px; }
+#happy { bottom: 105px; }
+
+body > p:nth-of-type(3) { bottom: 30px; }
+#energy { bottom: 65px; }}
+
+/* GAME */
+#gameOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: black;
+}
+
+#game {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+}
+
+/* GAME OVER */
+#gameOverScreen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    color: white;
+    text-align: center;
+    padding-top: 120px;
+}
+
+#gameOverScreen img {
+    width: 120px;
+    margin: 20px;
+}
+
+#gameOverScreen button {
+    display: block;
+    margin: 10px auto;
+    width: 150px;
+}
+
+/* LOAD SCREEN */
+#loadScreen {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: white;
+    cursor: pointer;
+    transition: opacity 1.5s ease;
+}
+
+#loadScreen img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.5;
+}
+
+#loadTitle {
+    font-size: 40px;
+    font-weight: bold;
+    z-index: 2;
+}
+
+#loadSub {
+    font-size: 18px;
+    margin-top: 5px;
+    z-index: 2;
+}
+
+#pressStart {
+    margin-top: 20px;
+    font-size: 20px;
+    animation: pulse 1s infinite;
+    z-index: 2;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.3; }
+    50% { opacity: 1; }
+    100% { opacity: 0.3; }
+}
+
+/* LOADING BAR */
+#barWrap {
+    width: 250px;
+    height: 10px;
+    border: 2px solid white;
+    margin-top: 20px;
+    display: none;
+    z-index: 2;
+}
+
+#barFill {
+    height: 100%;
+    width: 0%;
+    background: white;
+    transition: width 3s linear;
+}
+
+/* LOADING TEXT */
+#loadingText {
+    margin-top: 10px;
+    font-size: 16px;
+    display: none;
+    z-index: 2;
+}
+
+/* FADE */
+#fade {
+    position: fixed;
+    inset: 0;
+    background: black;
+    opacity: 1;
+    z-index: 100000;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOAD SCREEN -->
+<div id="loadScreen" onclick="startGame()">
+    <img src="loadscreen.jpeg">
+
+    <div id="loadTitle">HUSI AND FRIENDS</div>
+    <div id="loadSub">THE GAME</div>
+
+    <div id="pressStart">PRESS TO START</div>
+
+    <div id="barWrap">
+        <div id="barFill"></div>
+    </div>
+
+    <div id="loadingText">LOADING</div>
+</div>
+
+<!-- FADE -->
+<div id="fade"></div>
+
+<div> <h1>Zsömle 🐶</h1>
+
+<img id="pet" src="karakter.png">
+</div>
+<p>Éhség</p>
+<div id="hunger" class="bar"></div>
+
+<p>Boldogság</p>
+<div id="happy" class="bar"></div>
+
+<p>Energia</p>
+<div id="energy" class="bar"></div>
+
+<br>
+
+<button onclick="openGame()">Mini játék</button>
+
+<div id="gameOverlay">
+    <canvas id="game"></canvas>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameOverScreen">
+    <h1>GAME OVER</h1>
+    <h2>husi leesett</h2>
+
+    <img src="szomoru.png">
+
+    <button onclick="restartGame()">Restart</button>
+    <button onclick="backToMenu()">Menü</button>
+    <button onclick="quitGame()">Quit</button>
+</div>
+
+<script>
+
+/* 🌙 DAY/NIGHT BACKGROUND */
+
+function updateLobbyBackground() {
+    let hour = new Date().getHours();
+
+    if (hour >= 6 && hour < 18) {
+        document.body.style.backgroundImage = "url('lobbyday.jpeg')";
+    } else {
+        document.body.style.backgroundImage = "url('lobbynight.jpeg')";
+    }
+}
+
+updateLobbyBackground();
+setInterval(updateLobbyBackground, 1000 * 60 * 60 * 3);
+
+/* FADE IN */
+window.addEventListener("load", () => {
+    const fade = document.getElementById("fade");
+
+    setTimeout(() => {
+        fade.style.opacity = "0";
+    }, 50);
+
+    setTimeout(() => {
+        fade.style.display = "none";
+    }, 500);
+});
+
+/* LOAD SCREEN */
+
+let started = false;
+let loadingInterval;
+
+function startGame() {
+    if (started) return;
+    started = true;
+
+    document.getElementById("pressStart").style.display = "none";
+    document.getElementById("barWrap").style.display = "block";
+    document.getElementById("loadingText").style.display = "block";
+
+    setTimeout(() => {
+        document.getElementById("barFill").style.width = "100%";
+    }, 50);
+
+    let dots = 0;
+    loadingInterval = setInterval(() => {
+        dots = (dots + 1) % 4;
+        document.getElementById("loadingText").innerText =
+            "LOADING" + ".".repeat(dots);
+    }, 400);
+
+    setTimeout(() => {
+
+        clearInterval(loadingInterval);
+
+        let ls = document.getElementById("loadScreen");
+        ls.style.opacity = "0";
+
+        setTimeout(() => {
+            ls.style.display = "none";
+        }, 1500);
+
+    }, 3000);
+}
+
+/* UI */
+
+let hunger = 100;
+let happy = 100;
+let energy = 100;
+
+function updateBars() {
+    document.getElementById("hunger").style.width = hunger + "px";
+    document.getElementById("happy").style.width = happy + "px";
+    document.getElementById("energy").style.width = energy + "px";
+}
+
+/* GAME maradt ugyanaz... */
+
+let bgImage = new Image();
+bgImage.src = "ezkellneked.jpg";
+
+let charImg = new Image();
+charImg.src = "karakter.png";
+
+let canvas = document.getElementById("game");
+let ctx = canvas.getContext("2d");
+
+let gameRunning = false;
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+
+let dog = { x: 200, y: 200, vy: 0, size: 50 };
+
+let gravity = 0.35;
+let jumpPower = -12;
+
+let platforms = [];
+let highestY = 0;
+
+function createPlatforms() {
+    platforms = [];
+
+    let startY = canvas.height - 80;
+
+    platforms.push({
+        x: canvas.width / 2 - 60,
+        y: startY,
+        w: 120
+    });
+
+    for (let i = 0; i < 10; i++) {
+        platforms.push({
+            x: 50 + Math.random() * (canvas.width - 150),
+            y: startY - i * 90,
+            w: 110
+        });
+    }
+}
+
+function openGame() {
+    document.getElementById("gameOverlay").style.display = "block";
+    document.getElementById("gameOverScreen").style.display = "none";
+
+    resize();
+
+    gameRunning = true;
+
+    dog = {
+        x: canvas.width / 2,
+        y: canvas.height - 120,
+        vy: 0,
+        size: 50
+    };
+
+    highestY = dog.y;
+
+    createPlatforms();
+
+    updateGame();
+}
+
+function gameOver() {
+    gameRunning = false;
+    document.getElementById("gameOverScreen").style.display = "block";
+}
+
+function restartGame() {
+    openGame();
+}
+
+function backToMenu() {
+    document.getElementById("gameOverlay").style.display = "none";
+    document.getElementById("gameOverScreen").style.display = "none";
+    gameRunning = false;
+}
+
+function quitGame() {
+    document.getElementById("gameOverlay").style.display = "none";
+    document.getElementById("gameOverScreen").style.display = "none";
+    gameRunning = false;
+}
+
+document.addEventListener("keydown", (e) => {
+    if (!gameRunning) return;
+
+    if (e.key === "ArrowLeft") dog.x -= 18;
+    if (e.key === "ArrowRight") dog.x += 18;
+});
+
+function drawBackground() {
+    if (bgImage.complete) {
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+    }
+}
+
+function updateGame() {
+    if (!gameRunning) return;
+
+    drawBackground();
+
+    dog.vy += gravity;
+    dog.y += dog.vy;
+
+    if (dog.y < canvas.height * 0.3) {
+        let diff = canvas.height * 0.3 - dog.y;
+        dog.y = canvas.height * 0.3;
+
+        for (let p of platforms) {
+            p.y += diff;
+        }
+
+        highestY += diff;
+    }
+
+    for (let p of platforms) {
+        ctx.fillStyle = "#8B5A2B";
+        ctx.fillRect(p.x, p.y, p.w, 12);
+
+        if (
+            dog.vy > 0 &&
+            dog.x + dog.size > p.x &&
+            dog.x < p.x + p.w &&
+            dog.y + dog.size >= p.y &&
+            dog.y + dog.size <= p.y + 15
+        ) {
+            dog.y = p.y - dog.size;
+            dog.vy = jumpPower;
+        }
+    }
+
+    if (dog.y > canvas.height) {
+        gameOver();
+    }
+
+    ctx.drawImage(charImg, dog.x, dog.y, dog.size, dog.size);
+
+    requestAnimationFrame(updateGame);
+}
+
+updateBars();
+
+</script>
+
+</body>
+</html>
