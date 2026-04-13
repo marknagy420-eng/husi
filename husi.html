@@ -458,6 +458,8 @@ let hunger = 100;
 let happy = 100;
 let energy = 100;
 let coins = 0;
+let lastCareAt = Date.now();
+let activityScore = 0;
 
 const STORE_ITEMS = {
     food: { name: "🍖 Kaja", cost: 80, stat: "hunger", amount: 20 },
@@ -476,6 +478,10 @@ function updateBars() {
     document.getElementById("hunger").style.width = hunger + "px";
     document.getElementById("happy").style.width = happy + "px";
     document.getElementById("energy").style.width = energy + "px";
+}
+
+function carePet() {
+    lastCareAt = Date.now();
 }
 
 function updateCoinsUI() {
@@ -516,6 +522,21 @@ function applySkin(skinKey) {
     }
 }
 
+function getLobbyPetImage() {
+    if (energy < 50) return "faradt.png";
+    if (happy < 45) return "szomoru2.png";
+    return "karakter.png";
+}
+
+function updateLobbyPetState() {
+    const lobbyPet = document.getElementById("lobbyPet");
+    const nextSrc = getLobbyPetImage();
+    if (!lobbyPet.src.endsWith(nextSrc)) {
+        lobbyPet.src = nextSrc;
+    }
+    applySkin(currentSkin);
+}
+
 function buyStoreItem(itemKey) {
     const item = STORE_ITEMS[itemKey];
     if (!item) return;
@@ -533,6 +554,7 @@ function buyStoreItem(itemKey) {
         applySkin(currentSkin);
         updateCoinsUI();
         showStoreMessage(`${item.name} aktiválva.`);
+        updateLobbyPetState();
         return;
     }
 
@@ -546,9 +568,11 @@ function buyStoreItem(itemKey) {
     if (item.stat === "hunger") hunger += item.amount;
     if (item.stat === "happy") happy += item.amount;
     if (item.stat === "energy") energy += item.amount;
+    carePet();
 
     clampStats();
     updateBars();
+    updateLobbyPetState();
     updateCoinsUI();
     showStoreMessage(`${item.name} megvéve!`);
 }
@@ -662,6 +686,8 @@ document.addEventListener("keydown", (e) => {
 
     if (e.key === "ArrowLeft") player.x -= 18;
     if (e.key === "ArrowRight") player.x += 18;
+    activityScore = Math.min(30, activityScore + 2);
+    carePet();
 });
 
 function drawBackground() {
@@ -720,6 +746,29 @@ function updateGame() {
 updateBars();
 updateCoinsUI();
 applySkin(currentSkin);
+updateLobbyPetState();
+
+setInterval(() => {
+    const inactiveSeconds = (Date.now() - lastCareAt) / 1000;
+
+    if (inactiveSeconds > 25) {
+        happy -= 0.35;
+    } else {
+        happy -= 0.08;
+    }
+
+    if (gameRunning) {
+        energy -= 0.3 + activityScore * 0.04;
+        activityScore = Math.max(0, activityScore - 0.6);
+    } else {
+        energy -= 0.03;
+        activityScore = 0;
+    }
+
+    clampStats();
+    updateBars();
+    updateLobbyPetState();
+}, 1000);
 
 </script>
 
