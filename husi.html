@@ -2,7 +2,7 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<title>Zsömle</title>
+<title>Husi</title>
 
 <style>
 body {
@@ -122,6 +122,17 @@ body > p:nth-of-type(3) { bottom: 30px; }
     justify-content: center;
     text-shadow: 0 3px 8px rgba(0,0,0,0.9);
     background: rgba(0,0,0,0.35);
+}
+
+#pauseMenuBtn {
+    display: none;
+    position: fixed;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 36;
+    font-size: 20px;
+    padding: 12px 18px;
 }
 
 /* GAME OVER */
@@ -337,22 +348,22 @@ body > p:nth-of-type(3) { bottom: 30px; }
 <!-- FADE -->
 <div id="fade"></div>
 
-<div> <h1>Zsömle 🐶</h1>
+<div> <h1>Husi</h1>
 
 <img id="lobbyPet" src="karakter.png">
 </div>
-<p>Éhség</p>
+<p id="hungerLabel">Éhség</p>
 <div id="hunger" class="bar"></div>
 
-<p>Boldogság</p>
+<p id="happyLabel">Boldogság</p>
 <div id="happy" class="bar"></div>
 
-<p>Energia</p>
+<p id="energyLabel">Energia</p>
 <div id="energy" class="bar"></div>
 
 <br>
 
-<button onclick="openGame()">Mini játék</button>
+<button id="miniGameBtn" onclick="openGame()">Mini játék</button>
 <button id="storeArrow" onclick="openStore()" title="Store">⬅</button>
 <button id="roomArrow" onclick="toggleLobbyRoom()" title="Másik helység">➡</button>
 
@@ -413,6 +424,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 <div id="gameOverlay">
     <div id="gameHud">Level 1 • Ugrás: 0</div>
     <div id="pauseText">PAUSE</div>
+    <button id="pauseMenuBtn" onclick="exitPausedToMenu()">Kilépés a menübe</button>
     <canvas id="game"></canvas>
 </div>
 
@@ -647,13 +659,16 @@ let player = { x: 200, y: 200, vy: 0, size: 50 };
 let gravity = 0.35;
 let jumpPower = -12;
 const PLATFORM_WIDTH = 70;
-const PLATFORM_GAP_Y = 62;
+const PLATFORM_GAP_Y = 70;
 const PLATFORM_COUNT = 11;
 const LEVEL_JUMP_STEP = 7;
 const PLATFORM_EDGE_MARGIN = 30;
-const PLATFORM_X_STEP = PLATFORM_WIDTH;
+const PLATFORM_X_STEP = 95;
+const COIN_CHANCE = 0.4;
+const COIN_REWARD = 5;
 
 let platforms = [];
+let floatingCoins = [];
 let highestY = 0;
 let runMaxHeight = 0;
 let jumpCount = 0;
@@ -667,6 +682,7 @@ function updateGameHud() {
 
 function createPlatforms() {
     platforms = [];
+    floatingCoins = [];
     nextPlatformId = 0;
 
     let startY = canvas.height - 80;
@@ -678,6 +694,7 @@ function createPlatforms() {
         y: startY,
         w: PLATFORM_WIDTH
     });
+    spawnCoinForPlatform(platforms[0], true);
 
     for (let i = 1; i < PLATFORM_COUNT; i++) {
         previousX = getReachablePlatformX(previousX);
@@ -687,7 +704,19 @@ function createPlatforms() {
             y: startY - i * PLATFORM_GAP_Y,
             w: PLATFORM_WIDTH
         });
+        spawnCoinForPlatform(platforms[platforms.length - 1]);
     }
+}
+
+function spawnCoinForPlatform(platform, force = false) {
+    if (!force && Math.random() > COIN_CHANCE) return;
+    floatingCoins.push({
+        platformId: platform.id,
+        x: platform.x + platform.w / 2,
+        y: platform.y - 18,
+        collected: false,
+        bob: Math.random() * Math.PI * 2
+    });
 }
 
 function getReachablePlatformX(previousX) {
@@ -713,8 +742,7 @@ function openGame() {
     resize();
 
     gameRunning = true;
-    gamePaused = false;
-    document.getElementById("pauseText").style.display = "none";
+    setPauseState(false);
 
     player = {
         x: canvas.width / 2,
@@ -737,8 +765,7 @@ function openGame() {
 
 function gameOver() {
     gameRunning = false;
-    gamePaused = false;
-    document.getElementById("pauseText").style.display = "none";
+    setPauseState(false);
     showStoreMessage("A futam véget ért.");
     document.getElementById("gameOverScreen").style.display = "block";
 }
@@ -751,8 +778,7 @@ function backToMenu() {
     document.getElementById("gameOverlay").style.display = "none";
     document.getElementById("gameOverScreen").style.display = "none";
     gameRunning = false;
-    gamePaused = false;
-    document.getElementById("pauseText").style.display = "none";
+    setPauseState(false);
     setLobbyPetVisible(true);
 }
 
@@ -760,20 +786,34 @@ function quitGame() {
     document.getElementById("gameOverlay").style.display = "none";
     document.getElementById("gameOverScreen").style.display = "none";
     gameRunning = false;
-    gamePaused = false;
-    document.getElementById("pauseText").style.display = "none";
+    setPauseState(false);
     setLobbyPetVisible(true);
+}
+
+function setPauseState(paused) {
+    gamePaused = paused;
+    document.getElementById("pauseText").style.display = paused ? "flex" : "none";
+    document.getElementById("pauseMenuBtn").style.display = paused ? "block" : "none";
+}
+
+function exitPausedToMenu() {
+    if (!gameRunning || !gamePaused) return;
+    backToMenu();
 }
 
 document.addEventListener("keydown", (e) => {
     if (!gameRunning) return;
 
     if (e.key === "Escape") {
-        gamePaused = !gamePaused;
-        document.getElementById("pauseText").style.display = gamePaused ? "flex" : "none";
+        setPauseState(!gamePaused);
         if (!gamePaused) {
             requestAnimationFrame(updateGame);
         }
+        return;
+    }
+
+    if (gamePaused && (e.key.toLowerCase() === "m")) {
+        exitPausedToMenu();
         return;
     }
 
@@ -835,16 +875,39 @@ function updateGame() {
         }
     }
 
+    for (const coin of floatingCoins) {
+        if (coin.collected) continue;
+        const platform = platforms.find(p => p.id === coin.platformId);
+        if (!platform) continue;
+        coin.x = platform.x + platform.w / 2;
+        coin.y = platform.y - 18;
+        coin.bob += 0.08;
+        const drawY = coin.y + Math.sin(coin.bob) * 4;
+        ctx.font = "24px Arial";
+        ctx.fillText("🪙", coin.x - 10, drawY);
+
+        const hitX = player.x + player.size > coin.x - 12 && player.x < coin.x + 12;
+        const hitY = player.y + player.size > drawY - 24 && player.y < drawY + 6;
+        if (hitX && hitY) {
+            coin.collected = true;
+            coins += COIN_REWARD;
+            updateCoinsUI();
+        }
+    }
+
     for (let p of platforms) {
         if (p.y > canvas.height + 20) {
             const currentTopY = Math.min(...platforms.map(platform => platform.y));
             const topPlatform = platforms.reduce((closest, candidate) => {
                 return candidate.y < closest.y ? candidate : closest;
             }, platforms[0]);
+            const oldPlatformId = p.id;
             p.id = nextPlatformId++;
             p.y = currentTopY - PLATFORM_GAP_Y;
             p.x = getReachablePlatformX(topPlatform.x);
             p.w = PLATFORM_WIDTH;
+            floatingCoins = floatingCoins.filter(coin => coin.platformId !== oldPlatformId);
+            spawnCoinForPlatform(p);
         }
     }
 
@@ -884,6 +947,17 @@ function playRoomFade(onMidpoint) {
 function applyLobbyRoomVisuals() {
     const roomArrow = document.getElementById("roomArrow");
     const storeArrow = document.getElementById("storeArrow");
+    const lobbyStatsElements = [
+        "hungerLabel", "hunger",
+        "happyLabel", "happy",
+        "energyLabel", "energy",
+        "miniGameBtn"
+    ];
+
+    const showMainLobbyUi = currentLobbyRoom === "main";
+    for (const id of lobbyStatsElements) {
+        document.getElementById(id).style.display = showMainLobbyUi ? "block" : "none";
+    }
 
     if (currentLobbyRoom === "bathroom") {
         document.body.style.backgroundImage = "url('furdo.jpeg')";
