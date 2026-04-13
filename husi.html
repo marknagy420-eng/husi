@@ -18,7 +18,7 @@ body {
     overflow: hidden;
 }
 
-#pet {
+#lobbyPet {
     width: 140px;
 }
 
@@ -74,7 +74,7 @@ body > p:nth-of-type(2) { bottom: 70px; }
 #happy { bottom: 105px; }
 
 body > p:nth-of-type(3) { bottom: 30px; }
-#energy { bottom: 65px; }}
+#energy { bottom: 65px; }
 
 /* GAME */
 #gameOverlay {
@@ -221,7 +221,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 
 <div> <h1>Zsömle 🐶</h1>
 
-<img id="pet" src="karakter.png">
+<img id="lobbyPet" src="karakter.png">
 </div>
 <p>Éhség</p>
 <div id="hunger" class="bar"></div>
@@ -332,7 +332,7 @@ function updateBars() {
     document.getElementById("energy").style.width = energy + "px";
 }
 
-/* GAME maradt ugyanaz... */
+/* A lobby #lobbyPet statikus dekoráció, a mozgás csak a canvas játékoson történik. */
 
 let bgImage = new Image();
 bgImage.src = "ezkellneked.jpg";
@@ -351,7 +351,7 @@ function resize() {
 }
 window.addEventListener("resize", resize);
 
-let dog = { x: 200, y: 200, vy: 0, size: 50 };
+let player = { x: 200, y: 200, vy: 0, size: 50 };
 
 let gravity = 0.35;
 let jumpPower = -12;
@@ -387,14 +387,14 @@ function openGame() {
 
     gameRunning = true;
 
-    dog = {
+    player = {
         x: canvas.width / 2,
-        y: canvas.height - 120,
+        y: canvas.height - 320,
         vy: 0,
         size: 50
     };
 
-    highestY = dog.y;
+    highestY = player.y;
 
     createPlatforms();
 
@@ -425,8 +425,8 @@ function quitGame() {
 document.addEventListener("keydown", (e) => {
     if (!gameRunning) return;
 
-    if (e.key === "ArrowLeft") dog.x -= 18;
-    if (e.key === "ArrowRight") dog.x += 18;
+    if (e.key === "ArrowLeft") player.x -= 18;
+    if (e.key === "ArrowRight") player.x += 18;
 });
 
 function drawBackground() {
@@ -440,12 +440,12 @@ function updateGame() {
 
     drawBackground();
 
-    dog.vy += gravity;
-    dog.y += dog.vy;
+    player.vy += gravity;
+    player.y += player.vy;
 
-    if (dog.y < canvas.height * 0.3) {
-        let diff = canvas.height * 0.3 - dog.y;
-        dog.y = canvas.height * 0.3;
+    if (player.y < canvas.height * 0.3) {
+        let diff = canvas.height * 0.3 - player.y;
+        player.y = canvas.height * 0.3;
 
         for (let p of platforms) {
             p.y += diff;
@@ -459,22 +459,22 @@ function updateGame() {
         ctx.fillRect(p.x, p.y, p.w, 12);
 
         if (
-            dog.vy > 0 &&
-            dog.x + dog.size > p.x &&
-            dog.x < p.x + p.w &&
-            dog.y + dog.size >= p.y &&
-            dog.y + dog.size <= p.y + 15
+            player.vy > 0 &&
+            player.x + player.size > p.x &&
+            player.x < p.x + p.w &&
+            player.y + player.size >= p.y &&
+            player.y + player.size <= p.y + 15
         ) {
-            dog.y = p.y - dog.size;
-            dog.vy = jumpPower;
+            player.y = p.y - player.size;
+            player.vy = jumpPower;
         }
     }
 
-    if (dog.y > canvas.height) {
+    if (player.y > canvas.height) {
         gameOver();
     }
 
-    ctx.drawImage(charImg, dog.x, dog.y, dog.size, dog.size);
+    ctx.drawImage(charImg, player.x, player.y, player.size, player.size);
 
     requestAnimationFrame(updateGame);
 }
