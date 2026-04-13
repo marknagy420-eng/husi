@@ -615,9 +615,11 @@ let player = { x: 200, y: 200, vy: 0, size: 50 };
 let gravity = 0.35;
 let jumpPower = -12;
 const PLATFORM_WIDTH = 140;
-const PLATFORM_GAP_Y = 72;
+const PLATFORM_GAP_Y = 62;
 const PLATFORM_COUNT = 11;
 const LEVEL_JUMP_STEP = 30;
+const PLATFORM_EDGE_MARGIN = 30;
+const PLATFORM_MAX_X_STEP = 110;
 
 let platforms = [];
 let highestY = 0;
@@ -636,22 +638,32 @@ function createPlatforms() {
     nextPlatformId = 0;
 
     let startY = canvas.height - 80;
+    let previousX = canvas.width / 2 - PLATFORM_WIDTH / 2;
 
     platforms.push({
         id: nextPlatformId++,
-        x: canvas.width / 2 - PLATFORM_WIDTH / 2,
+        x: previousX,
         y: startY,
         w: PLATFORM_WIDTH
     });
 
     for (let i = 1; i < PLATFORM_COUNT; i++) {
+        previousX = getReachablePlatformX(previousX);
         platforms.push({
             id: nextPlatformId++,
-            x: 30 + Math.random() * (canvas.width - PLATFORM_WIDTH - 60),
+            x: previousX,
             y: startY - i * PLATFORM_GAP_Y,
             w: PLATFORM_WIDTH
         });
     }
+}
+
+function getReachablePlatformX(previousX) {
+    const minX = PLATFORM_EDGE_MARGIN;
+    const maxX = canvas.width - PLATFORM_WIDTH - PLATFORM_EDGE_MARGIN;
+    const nextMin = Math.max(minX, previousX - PLATFORM_MAX_X_STEP);
+    const nextMax = Math.min(maxX, previousX + PLATFORM_MAX_X_STEP);
+    return nextMin + Math.random() * (nextMax - nextMin);
 }
 
 function setLobbyPetVisible(isVisible) {
@@ -774,9 +786,12 @@ function updateGame() {
     for (let p of platforms) {
         if (p.y > canvas.height + 20) {
             const currentTopY = Math.min(...platforms.map(platform => platform.y));
+            const topPlatform = platforms.reduce((closest, candidate) => {
+                return candidate.y < closest.y ? candidate : closest;
+            }, platforms[0]);
             p.id = nextPlatformId++;
             p.y = currentTopY - PLATFORM_GAP_Y;
-            p.x = 30 + Math.random() * (canvas.width - PLATFORM_WIDTH - 60);
+            p.x = getReachablePlatformX(topPlatform.x);
             p.w = PLATFORM_WIDTH;
         }
     }
