@@ -2,6 +2,7 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Husi</title>
 
 <style>
@@ -16,6 +17,10 @@ body {
     height: 100vh;
     width: 100vw;
     overflow: hidden;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 #lobbyPet {
@@ -64,6 +69,10 @@ button {
     border-radius: 8px;
     border: 1px solid #8f7a63;
     cursor: pointer;
+}
+
+button:active {
+    transform: scale(0.97);
 }
 
 .bar {
@@ -143,6 +152,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
     width: 100vw;
     height: 100vh;
     display: block;
+    touch-action: none;
 }
 
 #gameHud {
@@ -491,6 +501,54 @@ body > p:nth-of-type(3) { bottom: 30px; }
     animation: statPulse 0.8s ease-in-out infinite;
     max-width: 270px;
 }
+
+@media (max-width: 900px) {
+    #lobbyPet {
+        width: 120px;
+    }
+
+    #bottomNav {
+        width: calc(100vw - 16px);
+        bottom: max(8px, env(safe-area-inset-bottom));
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .navBtn {
+        min-height: 48px;
+        font-size: 15px;
+    }
+
+    body > p:nth-of-type(1) { bottom: 126px; }
+    #hunger { bottom: 158px; }
+    body > p:nth-of-type(2) { bottom: 92px; }
+    #happy { bottom: 124px; }
+    body > p:nth-of-type(3) { bottom: 58px; }
+    #energy { bottom: 90px; }
+}
+
+@media (orientation: landscape) and (max-height: 540px) {
+    #bottomNav {
+        width: min(72vw, 600px);
+        left: auto;
+        right: 10px;
+        transform: none;
+        bottom: 10px;
+    }
+
+    #lobbyPet {
+        width: 100px;
+        top: 50vh;
+    }
+
+    #petActionBubble {
+        top: 42vh;
+    }
+
+    #hunger, #happy, #energy {
+        width: 150px;
+    }
+}
 </style>
 </head>
 
@@ -774,6 +832,7 @@ window.addEventListener("load", () => {
 
 let started = false;
 let loadingInterval;
+let lastVibrationAt = 0;
 
 function startGame() {
     if (started) return;
@@ -913,11 +972,13 @@ function updateCareAlert() {
         careAlert.innerText = message;
         if (!careAlertWasVisible) {
             playSound("noti");
+            triggerNotificationVibration([100, 80, 140]);
         }
         if (!careAlertSoundInterval) {
             careAlertSoundInterval = setInterval(() => {
                 if (careAlert.style.display === "block") {
                     playSound("noti");
+                    triggerNotificationVibration([70, 60, 70]);
                 }
             }, 3000);
         }
@@ -1069,6 +1130,14 @@ function toggleVibration() {
     if (vibrationEnabled && navigator.vibrate) {
         navigator.vibrate(60);
     }
+}
+
+function triggerNotificationVibration(pattern = 120) {
+    if (!vibrationEnabled || !navigator.vibrate) return;
+    const now = Date.now();
+    if (now - lastVibrationAt < 1500) return;
+    lastVibrationAt = now;
+    navigator.vibrate(pattern);
 }
 
 function exitToTray() {
@@ -1266,6 +1335,9 @@ let ctx = canvas.getContext("2d");
 
 let gameRunning = false;
 let gamePaused = false;
+let pointerControlActive = false;
+let pointerStartX = 0;
+let pointerStartPlayerX = 0;
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -1513,9 +1585,35 @@ document.addEventListener("keydown", (e) => {
 
     if (e.key === "ArrowLeft") player.x -= 18;
     if (e.key === "ArrowRight") player.x += 18;
+    clampPlayerX();
     activityScore = Math.min(30, activityScore + 2);
     carePet();
 });
+
+function clampPlayerX() {
+    const maxX = canvas.width - player.size;
+    player.x = Math.max(0, Math.min(maxX, player.x));
+}
+
+function handleGamePointerDown(event) {
+    if (!gameRunning || gamePaused) return;
+    pointerControlActive = true;
+    pointerStartX = event.clientX;
+    pointerStartPlayerX = player.x;
+}
+
+function handleGamePointerMove(event) {
+    if (!pointerControlActive || !gameRunning || gamePaused) return;
+    const deltaX = event.clientX - pointerStartX;
+    player.x = pointerStartPlayerX + deltaX;
+    clampPlayerX();
+    activityScore = Math.min(30, activityScore + 0.7);
+    carePet();
+}
+
+function stopGamePointerControl() {
+    pointerControlActive = false;
+}
 
 function drawBackground() {
     if (bgImage.complete) {
@@ -1801,6 +1899,7 @@ function updateGame() {
     }
 
     ctx.filter = currentRenderFilter;
+    clampPlayerX();
     ctx.drawImage(charImg, player.x, player.y, player.size, player.size);
     ctx.filter = "none";
 
@@ -1822,6 +1921,18 @@ document.addEventListener("click", (event) => {
     if (!button) return;
     playSound("button", { volume: 0.9 });
 });
+
+document.addEventListener("touchstart", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    playSound("button", { volume: 0.9 });
+}, { passive: true });
+
+canvas.addEventListener("pointerdown", handleGamePointerDown);
+canvas.addEventListener("pointermove", handleGamePointerMove);
+canvas.addEventListener("pointerup", stopGamePointerControl);
+canvas.addEventListener("pointercancel", stopGamePointerControl);
+canvas.addEventListener("pointerleave", stopGamePointerControl);
 
 function playRoomFade(onMidpoint) {
     const fade = document.getElementById("fade");
