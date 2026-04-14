@@ -30,6 +30,10 @@ body {
     top: 56vh;              /* ezzel lejjebb kerül a szőnyegre */
     transform: translateX(-50%);
     z-index: 5;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
 }
 
 #petActionBubble {
@@ -640,7 +644,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 
 <div> <h1>Husi</h1>
 
-<img id="lobbyPet" src="karakter.png">
+<img id="lobbyPet" src="karakter.png" draggable="false">
 <div id="petActionBubble"></div>
 </div>
 <div id="lobbyClock">00:00:00</div>
@@ -1387,6 +1391,7 @@ function updateLobbyPetState() {
 function onBathPetSwipe(event) {
     if (currentLobbyRoom !== "bathroom" || !petDirty) return;
     if (event.buttons === 0 && event.type !== "pointerdown") return;
+    event.preventDefault();
     const currentX = event.clientX;
     if (!bathLastX) {
         bathLastX = currentX;
@@ -1855,6 +1860,7 @@ function clampPlayerX() {
 
 function handleGamePointerDown(event) {
     if (!gameRunning || gamePaused) return;
+    event.preventDefault();
     pointerControlActive = true;
     pointerStartX = event.clientX;
     pointerStartPlayerX = player.x;
@@ -1862,6 +1868,7 @@ function handleGamePointerDown(event) {
 
 function handleGamePointerMove(event) {
     if (!pointerControlActive || !gameRunning || gamePaused) return;
+    event.preventDefault();
     const deltaX = event.clientX - pointerStartX;
     player.x = pointerStartPlayerX + deltaX;
     clampPlayerX();
