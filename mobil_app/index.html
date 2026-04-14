@@ -66,6 +66,21 @@ body {
     letter-spacing: 0.08em;
 }
 
+#husiLevelBadge {
+    position: fixed;
+    top: 56px;
+    left: 16px;
+    z-index: 64;
+    display: none;
+    padding: 5px 10px;
+    border-radius: 10px;
+    background: rgba(20, 20, 20, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+}
+
 button {
     margin: 5px;
     padding: 10px;
@@ -583,6 +598,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 <div id="petActionBubble"></div>
 </div>
 <div id="lobbyClock">00:00:00</div>
+<div id="husiLevelBadge">Husi szint: 1</div>
 <p id="hungerLabel">Éhség: 100/500</p>
 <div id="hunger" class="bar"></div>
 
@@ -901,7 +917,8 @@ const STORE_ITEMS = {
     defaultSkin: { name: "🐶 Alap skin", type: "skin", cost: 0, skin: "default" },
     coolSkin: { name: "😎 Cool skin", type: "skin", cost: 1500, skin: "cool" },
     legendSkin: { name: "🔥 Legendary skin", type: "skin", cost: 50000, skin: "legend" },
-    halloweenBackground: { name: "🎃 Halloween háttér", type: "background", cost: 100, background: "halloween" }
+    halloweenBackground: { name: "🎃 Halloween háttér", type: "background", cost: 200, background: "halloween" },
+    xmasBackground: { name: "🎄 Xmas háttér", type: "background", cost: 200, background: "xmas" }
 };
 
 const STORE_CATEGORY_CONFIG = [
@@ -922,7 +939,8 @@ const SKIN_IMAGE_MAP = {
 };
 const GAME_BACKGROUND_IMAGE_MAP = {
     default: "ezkellneked.jpg",
-    halloween: "halloween.png"
+    halloween: "halloween.jpg",
+    xmas: "xmas.jpg"
 };
 const PURCHASE_PREVIEW_IMAGE_MAP = {
     meat: "steak.png",
@@ -1244,6 +1262,7 @@ function updateClockVisibility() {
         document.getElementById("settingsScreen").style.display !== "block" &&
         document.getElementById("loadScreen").style.display !== "flex";
     document.getElementById("lobbyClock").style.display = inLobbyOnly ? "block" : "none";
+    document.getElementById("husiLevelBadge").style.display = inLobbyOnly ? "block" : "none";
 }
 
 function startLobbyClock() {
@@ -1365,6 +1384,8 @@ const PLATFORM_X_STEP = 95;
 const COIN_CHANCE = 0.45;
 const VIRTUAL_COIN_STEP = 15;
 const VIRTUAL_COIN_REWARD = 15;
+const HUSI_LEVEL_SCORE_STEP = 3000;
+const HUSI_LEVEL_CAP = 100;
 const JET_PLATFORM_CHANCE = 0.08;
 const COIN_TYPES = {
     silver: { reward: 10, icon: "🥈", chance: 0.68 },
@@ -1380,11 +1401,25 @@ let highestY = 0;
 let runMaxHeight = 0;
 let jumpCount = 0;
 let level = 1;
+let husiScorePoints = 0;
+let husiLevel = 1;
 let lastLandedPlatformId = null;
 let nextPlatformId = 0;
 
 function updateGameHud() {
     document.getElementById("gameHud").innerText = t("levelJump")(level, jumpCount);
+}
+
+function updateHusiLevelBadge() {
+    document.getElementById("husiLevelBadge").innerText = `🐾 Husi szint: ${husiLevel}`;
+}
+
+function addScorePoints(pointsToAdd) {
+    if (!Number.isFinite(pointsToAdd) || pointsToAdd <= 0) return;
+    const levelCapScore = (HUSI_LEVEL_CAP - 1) * HUSI_LEVEL_SCORE_STEP;
+    husiScorePoints = Math.min(levelCapScore, husiScorePoints + Math.round(pointsToAdd));
+    husiLevel = Math.min(HUSI_LEVEL_CAP, Math.floor(husiScorePoints / HUSI_LEVEL_SCORE_STEP) + 1);
+    updateHusiLevelBadge();
 }
 
 function createPlatforms() {
@@ -1538,7 +1573,7 @@ function backToMenu() {
     gameRunning = false;
     setPauseState(false);
     setLobbyPetVisible(true);
-    setBottomNavVisible(true);
+    setBottomNavVisible(currentLobbyRoom === "main");
     updateClockVisibility();
 }
 
@@ -1549,7 +1584,7 @@ function quitGame() {
     gameRunning = false;
     setPauseState(false);
     setLobbyPetVisible(true);
-    setBottomNavVisible(true);
+    setBottomNavVisible(currentLobbyRoom === "main");
     updateClockVisibility();
 }
 
@@ -1803,6 +1838,7 @@ function updateGame() {
             if (lastLandedPlatformId !== p.id) {
                 jumpCount++;
                 coins += 1;
+                addScorePoints(100);
                 if (jumpCount % VIRTUAL_COIN_STEP === 0) {
                     coins += VIRTUAL_COIN_REWARD;
                     showStoreMessage(t("virtualCoin"));
@@ -1851,6 +1887,7 @@ function updateGame() {
         if (hitX && hitY) {
             coin.collected = true;
             coins += COIN_TYPES[coin.type].reward;
+            addScorePoints(COIN_TYPES[coin.type].reward * 10);
             playSound("coin");
             updateCoinsUI();
         }
@@ -1872,6 +1909,7 @@ function updateGame() {
         if (hitX && hitY) {
             jet.collected = true;
             player.vy = Math.min(player.vy, jumpPower * 2.05);
+            addScorePoints(180);
             playJumpSound();
             showBoostNotice();
             showStoreMessage(t("jetBoost"));
@@ -1918,6 +1956,7 @@ renderStore();
 preloadAssets();
 applySkin(currentSkin);
 updateLobbyPetState();
+updateHusiLevelBadge();
 applyTranslations();
 applyLobbyRoomVisuals();
 startLobbyClock();
@@ -1969,6 +2008,7 @@ function applyLobbyRoomVisuals() {
     for (const id of lobbyStatsElements) {
         document.getElementById(id).style.display = showMainLobbyUi ? "block" : "none";
     }
+    setBottomNavVisible(showMainLobbyUi);
 
     if (currentLobbyRoom === "bathroom") {
         document.body.style.backgroundImage = "url('furdo.jpeg')";
