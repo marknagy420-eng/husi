@@ -40,6 +40,23 @@ button {
     height: 10px;
     background: white;
     width: 200px;
+    border-radius: 999px;
+    transition: width 0.25s ease, background-color 0.25s ease;
+}
+
+.bar.low {
+    animation: statPulse 0.8s ease-in-out infinite;
+}
+
+.bar.empty {
+    background: #ff2d2d !important;
+    animation: none;
+}
+
+@keyframes statPulse {
+    0% { transform: scaleX(1); opacity: 0.75; }
+    50% { transform: scaleX(1.03); opacity: 1; }
+    100% { transform: scaleX(1); opacity: 0.75; }
 }
 
 /* 🔥 BAL ALSÓ HUD */
@@ -343,7 +360,10 @@ body > p:nth-of-type(3) { bottom: 30px; }
     width: 58px;
     height: 58px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(20, 20, 20, 0.24);
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(6px);
+    color: white;
 }
 
 #storeScreen {
@@ -403,6 +423,42 @@ body > p:nth-of-type(3) { bottom: 30px; }
     margin-top: 12px;
     color: #ffe2c1;
 }
+
+#boostNotice {
+    display: none;
+    position: fixed;
+    top: 18vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    color: #ffe066;
+    font-weight: bold;
+    font-size: 38px;
+    text-shadow: 0 0 12px rgba(255, 187, 0, 0.9);
+    animation: boostPulse 0.2s ease-in-out infinite;
+}
+
+@keyframes boostPulse {
+    0% { opacity: 0.45; transform: translateX(-50%) scale(0.95); }
+    50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+    100% { opacity: 0.45; transform: translateX(-50%) scale(0.95); }
+}
+
+#careAlert {
+    display: none;
+    position: fixed;
+    top: 12px;
+    right: 16px;
+    z-index: 58;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid rgba(255, 110, 110, 0.8);
+    color: #ffd8d8;
+    font-weight: bold;
+    animation: statPulse 0.8s ease-in-out infinite;
+    max-width: 270px;
+}
 </style>
 </head>
 
@@ -450,6 +506,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
     <button id="miniGameBtn" class="navBtn" onclick="openGame()">🎮 Mini játék</button>
     <button id="settingsBtn" class="navBtn" onclick="openSettings()">⚙️ Beállítások</button>
 </div>
+<div id="careAlert"></div>
 
 <div id="storeScreen">
     <div id="storeContent">
@@ -534,6 +591,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 
 <div id="gameOverlay">
     <div id="gameHud">Level 1 • Ugrás: 0</div>
+    <div id="boostNotice">BOOST</div>
     <div id="pauseText">PAUSE</div>
     <button id="pauseMenuBtn" onclick="exitPausedToMenu()">Kilépés a menübe</button>
     <canvas id="game"></canvas>
@@ -598,6 +656,10 @@ const I18N = {
         roomBack: "Vissza a lobbyba",
         virtualCoin: "Virtuális coin bónusz +15",
         jetBoost: "JET BOOST!",
+        boost: "BOOST",
+        careNeedFood: "Husi éhes. Vásárolj neki kaját!",
+        careNeedEnergy: "Husi fáradt. Vásárolj neki energy italt!",
+        careNeedHappy: "Husi szomorú. Vásárolj neki játékot!",
         trayFail: "A böngésző nem engedte bezárni, app elrejtve."
     },
     en: {
@@ -612,7 +674,9 @@ const I18N = {
         pressStart: "PRESS TO START", loading: "LOADING",
         menu: "Menu", quit: "Quit", levelJump: (level, jump) => `Level ${level} • Jump: ${jump}`,
         roomNext: "Next room", roomBack: "Back to lobby", virtualCoin: "Virtual coin bonus +15",
-        jetBoost: "JET BOOST!", trayFail: "Browser blocked close, app hidden."
+        jetBoost: "JET BOOST!", boost: "BOOST", careNeedFood: "Husi is hungry. Buy food!",
+        careNeedEnergy: "Husi is tired. Buy an energy drink!", careNeedHappy: "Husi is sad. Buy a toy!",
+        trayFail: "Browser blocked close, app hidden."
     },
     uk: {
         hunger: "Голод", happiness: "Щастя", energy: "Енергія", miniGame: "🎮 Міні-гра",
@@ -626,7 +690,9 @@ const I18N = {
         pressStart: "НАТИСНІТЬ ДЛЯ СТАРТУ", loading: "ЗАВАНТАЖЕННЯ",
         menu: "Меню", quit: "Вийти", levelJump: (level, jump) => `Рівень ${level} • Стрибки: ${jump}`,
         roomNext: "Інша кімната", roomBack: "Назад у лобі", virtualCoin: "Бонус віртуальної монети +15",
-        jetBoost: "JET BOOST!", trayFail: "Браузер заборонив закриття, додаток приховано."
+        jetBoost: "JET BOOST!", boost: "BOOST", careNeedFood: "Husi голодний. Купи їжу!",
+        careNeedEnergy: "Husi втомився. Купи енергетик!", careNeedHappy: "Husi сумує. Купи іграшку!",
+        trayFail: "Браузер заборонив закриття, додаток приховано."
     },
     de: {
         hunger: "Hunger", happiness: "Glück", energy: "Energie", miniGame: "🎮 Minispiel",
@@ -640,7 +706,9 @@ const I18N = {
         pressStart: "TIPPEN ZUM START", loading: "LADEN",
         menu: "Menü", quit: "Beenden", levelJump: (level, jump) => `Level ${level} • Sprünge: ${jump}`,
         roomNext: "Anderer Raum", roomBack: "Zurück zur Lobby", virtualCoin: "Virtueller Coin-Bonus +15",
-        jetBoost: "JET BOOST!", trayFail: "Browser blockierte das Schließen, App wurde versteckt."
+        jetBoost: "JET BOOST!", boost: "BOOST", careNeedFood: "Husi hat Hunger. Kauf Futter!",
+        careNeedEnergy: "Husi ist müde. Kauf ein Energy-Getränk!", careNeedHappy: "Husi ist traurig. Kauf ein Spielzeug!",
+        trayFail: "Browser blockierte das Schließen, App wurde versteckt."
     },
     zh: {
         hunger: "饥饿", happiness: "快乐", energy: "体力", miniGame: "🎮 迷你游戏",
@@ -654,7 +722,9 @@ const I18N = {
         pressStart: "点击开始", loading: "加载中",
         menu: "菜单", quit: "退出", levelJump: (level, jump) => `等级 ${level} • 跳跃: ${jump}`,
         roomNext: "切换房间", roomBack: "返回大厅", virtualCoin: "虚拟金币奖励 +15",
-        jetBoost: "喷射加速！", trayFail: "浏览器阻止关闭，已隐藏应用。"
+        jetBoost: "喷射加速！", boost: "BOOST", careNeedFood: "Husi 饿了，去买食物！",
+        careNeedEnergy: "Husi 累了，去买能量饮料！", careNeedHappy: "Husi 不开心了，去买玩具！",
+        trayFail: "浏览器阻止关闭，已隐藏应用。"
     }
 };
 
@@ -757,9 +827,49 @@ const SKIN_IMAGE_MAP = {
 };
 
 function updateBars() {
-    document.getElementById("hunger").style.width = hunger + "px";
-    document.getElementById("happy").style.width = happy + "px";
-    document.getElementById("energy").style.width = energy + "px";
+    updateSingleBar("hunger", hunger);
+    updateSingleBar("happy", happy);
+    updateSingleBar("energy", energy);
+    updateCareAlert();
+}
+
+function updateSingleBar(id, value) {
+    const bar = document.getElementById(id);
+    const lowThreshold = 40;
+    bar.style.width = value + "px";
+    bar.classList.toggle("low", value > 0 && value <= lowThreshold);
+    bar.classList.toggle("empty", value <= 0);
+}
+
+function updateCareAlert() {
+    const careAlert = document.getElementById("careAlert");
+    let message = "";
+
+    if (hunger <= 40) {
+        message = t("careNeedFood");
+    } else if (energy <= 40) {
+        message = t("careNeedEnergy");
+    } else if (happy <= 40) {
+        message = t("careNeedHappy");
+    }
+
+    if (message && currentLobbyRoom === "main" && !gameRunning) {
+        careAlert.style.display = "block";
+        careAlert.innerText = message;
+    } else {
+        careAlert.style.display = "none";
+    }
+}
+
+let boostNoticeTimeout;
+function showBoostNotice() {
+    const boostNotice = document.getElementById("boostNotice");
+    boostNotice.innerText = t("boost");
+    boostNotice.style.display = "block";
+    clearTimeout(boostNoticeTimeout);
+    boostNoticeTimeout = setTimeout(() => {
+        boostNotice.style.display = "none";
+    }, 650);
 }
 
 function carePet() {
@@ -968,15 +1078,16 @@ const PLATFORM_X_STEP = 95;
 const COIN_CHANCE = 0.45;
 const VIRTUAL_COIN_STEP = 15;
 const VIRTUAL_COIN_REWARD = 15;
-const JET_PLATFORM_CHANCE = 0.22;
+const JET_PLATFORM_CHANCE = 0.08;
 const COIN_TYPES = {
     silver: { reward: 10, icon: "🥈", chance: 0.68 },
     gold: { reward: 20, icon: "🥇", chance: 0.32 }
 };
-const BROKEN_PLATFORM_CHANCE = 0.2;
+const BROKEN_PLATFORM_CHANCE = 0;
 
 let platforms = [];
 let floatingCoins = [];
+let floatingJets = [];
 let fallingBrokenPieces = [];
 let highestY = 0;
 let runMaxHeight = 0;
@@ -992,6 +1103,7 @@ function updateGameHud() {
 function createPlatforms() {
     platforms = [];
     floatingCoins = [];
+    floatingJets = [];
     fallingBrokenPieces = [];
     nextPlatformId = 0;
 
@@ -1020,12 +1132,13 @@ function createPlatforms() {
         });
         platforms[platforms.length - 1].jet = shouldPlatformHaveJet(platforms[platforms.length - 1], i);
         spawnCoinForPlatform(platforms[platforms.length - 1]);
+        spawnJetForPlatform(platforms[platforms.length - 1], i);
     }
 }
 
 function shouldPlatformHaveJet(platform, index = 0) {
     if (platform.broken) return false;
-    if (index > 0 && index % 4 === 0) return true;
+    if (index > 0 && index % 12 === 0) return true;
     return Math.random() < JET_PLATFORM_CHANCE;
 }
 
@@ -1038,6 +1151,21 @@ function spawnCoinForPlatform(platform, force = false) {
         type: coinType,
         x: platform.x + platform.w / 2,
         y: platform.y - 18,
+        collected: false,
+        bob: Math.random() * Math.PI * 2
+    });
+}
+
+function spawnJetForPlatform(platform, index = 0) {
+    if (platform.broken || !platform.jet) return;
+    if (index % 8 !== 0 && Math.random() > JET_PLATFORM_CHANCE) {
+        platform.jet = false;
+        return;
+    }
+    floatingJets.push({
+        platformId: platform.id,
+        x: platform.x + platform.w / 2,
+        y: platform.y - 22,
         collected: false,
         bob: Math.random() * Math.PI * 2
     });
@@ -1200,10 +1328,6 @@ function drawPlatform(p) {
     drawRoundedRect(p.x, p.y, p.w, PLATFORM_HEIGHT, PLATFORM_RADIUS);
     ctx.fill();
 
-    if (p.jet) {
-        ctx.font = "18px Arial";
-        ctx.fillText("🚀", p.x + p.w / 2 - 8, p.y - 6);
-    }
 }
 
 let audioCtx = null;
@@ -1324,12 +1448,6 @@ function updateGame() {
             player.y = p.y - player.size;
             player.vy = jumpPower;
             let didJetBoost = false;
-            if (p.jet) {
-                player.vy = jumpPower * 2.05;
-                didJetBoost = true;
-                showStoreMessage(t("jetBoost"));
-                if (vibrationEnabled && navigator.vibrate) navigator.vibrate(120);
-            }
             if (lastLandedPlatformId !== p.id) {
                 jumpCount++;
                 coins += 1;
@@ -1381,6 +1499,29 @@ function updateGame() {
         }
     }
 
+    for (const jet of floatingJets) {
+        if (jet.collected) continue;
+        const platform = platforms.find(p => p.id === jet.platformId);
+        if (!platform) continue;
+        jet.x = platform.x + platform.w / 2;
+        jet.y = platform.y - 22;
+        jet.bob += 0.12;
+        const drawY = jet.y + Math.sin(jet.bob) * 4;
+        ctx.font = "22px Arial";
+        ctx.fillText("🚀", jet.x - 8, drawY);
+
+        const hitX = player.x + player.size > jet.x - 12 && player.x < jet.x + 12;
+        const hitY = player.y + player.size > drawY - 24 && player.y < drawY + 8;
+        if (hitX && hitY) {
+            jet.collected = true;
+            player.vy = Math.min(player.vy, jumpPower * 2.05);
+            playJumpSound(true);
+            showBoostNotice();
+            showStoreMessage(t("jetBoost"));
+            if (vibrationEnabled && navigator.vibrate) navigator.vibrate(120);
+        }
+    }
+
     for (let p of platforms) {
         if (p.y > canvas.height + 20) {
             const currentTopY = Math.min(...platforms.map(platform => platform.y));
@@ -1396,7 +1537,9 @@ function updateGame() {
             p.jet = shouldPlatformHaveJet(p, nextPlatformId);
             p.falling = false;
             floatingCoins = floatingCoins.filter(coin => coin.platformId !== oldPlatformId);
+            floatingJets = floatingJets.filter(jet => jet.platformId !== oldPlatformId);
             spawnCoinForPlatform(p);
+            spawnJetForPlatform(p, nextPlatformId);
         }
     }
 
@@ -1458,6 +1601,7 @@ function applyLobbyRoomVisuals() {
         roomArrow.innerText = "➡";
         roomArrow.title = t("roomNext");
     }
+    updateCareAlert();
 }
 
 function toggleLobbyRoom() {
@@ -1473,17 +1617,17 @@ setInterval(() => {
     const inactiveSeconds = (Date.now() - lastCareAt) / 1000;
 
     if (inactiveSeconds > 25) {
-        happy -= 0.35;
+        happy -= 0.12;
     } else {
-        happy -= 0.08;
+        happy -= 0.04;
     }
 
     if (gameRunning && !gamePaused) {
-        hunger -= 0.25 + activityScore * 0.02;
-        energy -= 0.3 + activityScore * 0.04;
-        activityScore = Math.max(0, activityScore - 0.6);
+        hunger -= 0.08 + activityScore * 0.008;
+        energy -= 0.09 + activityScore * 0.01;
+        activityScore = Math.max(0, activityScore - 0.2);
     } else {
-        energy -= 0.03;
+        energy -= 0.015;
         activityScore = 0;
     }
 
