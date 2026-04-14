@@ -564,6 +564,9 @@ body > p:nth-of-type(3) { bottom: 30px; }
         <h3>Skinek</h3>
         <div class="storeGrid" id="skinStoreGrid"></div>
 
+        <h3>Hátterek</h3>
+        <div class="storeGrid" id="backgroundStoreGrid"></div>
+
         <div id="storeMessage"></div>
     </div>
 </div>
@@ -752,7 +755,7 @@ function updateLobbyBackground() {
 }
 
 updateLobbyBackground();
-setInterval(updateLobbyBackground, 1000 * 60 * 60 * 3);
+setInterval(updateLobbyBackground, 1000 * 60);
 
 /* FADE IN */
 window.addEventListener("load", () => {
@@ -834,14 +837,16 @@ const STORE_ITEMS = {
     energyDrink: { name: "⚡ Energia ital", category: "energy", cost: 250, effects: { energy: 70 }, extra: "fatigueBoost" },
     defaultSkin: { name: "🐶 Alap skin", type: "skin", cost: 0, skin: "default" },
     coolSkin: { name: "😎 Cool skin", type: "skin", cost: 1500, skin: "cool" },
-    legendSkin: { name: "🔥 Legendary skin", type: "skin", cost: 50000, skin: "legend" }
+    legendSkin: { name: "🔥 Legendary skin", type: "skin", cost: 50000, skin: "legend" },
+    halloweenBackground: { name: "🎃 Halloween háttér", type: "background", cost: 100, background: "halloween" }
 };
 
 const STORE_CATEGORY_CONFIG = [
     { id: "foodStoreGrid", category: "food" },
     { id: "gameStoreGrid", category: "games" },
     { id: "energyStoreGrid", category: "energy" },
-    { id: "skinStoreGrid", category: "skin" }
+    { id: "skinStoreGrid", category: "skin" },
+    { id: "backgroundStoreGrid", category: "background" }
 ];
 
 const ownedSkins = new Set(["default"]);
@@ -852,6 +857,26 @@ const SKIN_IMAGE_MAP = {
     cool: "coolskin.png",
     legend: "legendary.png"
 };
+const GAME_BACKGROUND_IMAGE_MAP = {
+    default: "ezkellneked.jpg",
+    halloween: "halloween.png"
+};
+const PURCHASE_PREVIEW_IMAGE_MAP = {
+    meat: "steak.png",
+    dogFood: "tal.png",
+    bone: "bone.png",
+    cookie: "cake.png",
+    treat: "cup.png",
+    ball: "ball.png",
+    rope: "kotel.png",
+    rubberChicken: "csirke.png",
+    chocolate: "csoki.png",
+    energyDrink: "energy.png"
+};
+const ownedGameBackgrounds = new Set(["default"]);
+let currentGameBackground = "default";
+let temporaryLobbyPetImage = null;
+let temporaryLobbyPetTimer = null;
 
 function updateBars() {
     updateSingleBar("hunger", hunger);
@@ -926,14 +951,22 @@ function renderStore() {
             card.className = "storeCard";
             const effectText = item.type === "skin"
                 ? (item.cost === 0 ? "Ingyenes" : `${item.cost} coin`)
+                : item.type === "background"
+                    ? `${item.cost} coin • Mini játék háttér`
                 : Object.entries(item.effects)
                     .map(([stat, value]) => `+${value} ${stat === "hunger" ? "éhség" : stat === "happy" ? "boldogság" : "energia"}`)
                     .join(" • ");
+            const buttonText = item.type === "skin"
+                ? (item.cost === 0 ? t("use") : t("buyUse"))
+                : item.type === "background"
+                    ? (ownedGameBackgrounds.has(item.background) ? t("use") : `${item.cost} coin`)
+                    : `${item.cost} coin`;
             card.innerHTML = `
                 <h4>${item.name}</h4>
                 ${item.skin ? `<img src="${SKIN_IMAGE_MAP[item.skin]}" alt="${item.name}" style="width:70px;height:70px;display:block;margin-bottom:8px;">` : ""}
+                ${item.background ? `<img src="${GAME_BACKGROUND_IMAGE_MAP[item.background]}" alt="${item.name}" style="width:100%;height:90px;object-fit:cover;border-radius:8px;display:block;margin-bottom:8px;">` : ""}
                 <p>${effectText}</p>
-                <button onclick="buyStoreItem('${itemKey}')">${item.type === "skin" ? (item.cost === 0 ? t("use") : t("buyUse")) : `${item.cost} coin`}</button>
+                <button onclick="buyStoreItem('${itemKey}')">${buttonText}</button>
             `;
             grid.appendChild(card);
         }
@@ -1045,6 +1078,32 @@ function applySkin(skinKey) {
     charImg.src = SKIN_IMAGE_MAP[skinKey] || SKIN_IMAGE_MAP.default;
 }
 
+function applyGameBackground(backgroundKey) {
+    currentGameBackground = backgroundKey;
+    bgImage.src = GAME_BACKGROUND_IMAGE_MAP[currentGameBackground] || GAME_BACKGROUND_IMAGE_MAP.default;
+}
+
+function canShowTemporaryLobbyPet() {
+    return currentLobbyRoom === "main" &&
+        !gameRunning &&
+        document.getElementById("storeScreen").style.display !== "block" &&
+        document.getElementById("settingsScreen").style.display !== "block" &&
+        document.getElementById("gameOverlay").style.display !== "block" &&
+        document.getElementById("gameOverScreen").style.display !== "block";
+}
+
+function triggerTemporaryLobbyPet(itemKey) {
+    const nextImage = PURCHASE_PREVIEW_IMAGE_MAP[itemKey];
+    if (!nextImage) return;
+    temporaryLobbyPetImage = nextImage;
+    clearTimeout(temporaryLobbyPetTimer);
+    temporaryLobbyPetTimer = setTimeout(() => {
+        temporaryLobbyPetImage = null;
+        updateLobbyPetState();
+    }, 10000);
+    updateLobbyPetState();
+}
+
 function getLobbyPetImage() {
     if (hunger <= 35 && energy >= 35) return "ehes.png";
     if (energy < 35) return "faradt.png";
@@ -1055,7 +1114,7 @@ function getLobbyPetImage() {
 
 function updateLobbyPetState() {
     const lobbyPet = document.getElementById("lobbyPet");
-    const nextSrc = getLobbyPetImage();
+    const nextSrc = (temporaryLobbyPetImage && canShowTemporaryLobbyPet()) ? temporaryLobbyPetImage : getLobbyPetImage();
     if (!lobbyPet.src.endsWith(nextSrc)) {
         lobbyPet.src = nextSrc;
     }
@@ -1111,6 +1170,24 @@ function buyStoreItem(itemKey) {
     const item = STORE_ITEMS[itemKey];
     if (!item) return;
 
+    if (item.type === "background") {
+        if (!ownedGameBackgrounds.has(item.background)) {
+            if (coins < item.cost) {
+                showStoreMessage(t("notEnoughCoin"));
+                return;
+            }
+            coins -= item.cost;
+            ownedGameBackgrounds.add(item.background);
+            showStoreMessage(`${item.name} ${t("bought")}`);
+        } else {
+            showStoreMessage(`${item.name} ${t("activated")}`);
+        }
+        applyGameBackground(item.background);
+        updateCoinsUI();
+        renderStore();
+        return;
+    }
+
     if (item.type === "skin") {
         if (!ownedSkins.has(item.skin)) {
             if (coins < item.cost) {
@@ -1147,6 +1224,7 @@ function buyStoreItem(itemKey) {
     updateLobbyPetState();
     updateCoinsUI();
     showStoreMessage(`${item.name} ${t("bought")}`);
+    triggerTemporaryLobbyPet(itemKey);
     if (item.category === "food") {
         showPetActionBubble(item.consumeText || item.name);
     }
@@ -1155,7 +1233,7 @@ function buyStoreItem(itemKey) {
 /* A lobby #lobbyPet statikus dekoráció, a mozgás csak a canvas játékoson történik. */
 
 let bgImage = new Image();
-bgImage.src = "ezkellneked.jpg";
+applyGameBackground("default");
 
 let charImg = new Image();
 charImg.src = "karakter.png";
@@ -1383,6 +1461,11 @@ function exitPausedToMenu() {
 }
 
 document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.getElementById("storeScreen").style.display === "block") {
+        closeStore();
+        return;
+    }
+
     if (!gameRunning) return;
 
     if (e.key === "Escape") {
