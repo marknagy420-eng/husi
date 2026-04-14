@@ -1076,7 +1076,7 @@ function loadProgress() {
         lastRunScore = Number(data.lastRunScore ?? lastRunScore);
         lastRunCoins = Number(data.lastRunCoins ?? lastRunCoins);
         lastRunDurationMs = Number(data.lastRunDurationMs ?? lastRunDurationMs);
-        petDirty = Boolean(data.petDirty) || runCount >= 8;
+        petDirty = data.petDirty != null ? Boolean(data.petDirty) : (runCount > 0 && runCount % 8 === 0);
         clampStats();
     } catch (err) {
         console.warn("Mentés betöltési hiba", err);
@@ -1177,7 +1177,7 @@ function renderStore() {
         grid.innerHTML = "";
 
         const filtered = items.filter(([, item]) =>
-            section.category === "skin" ? item.type === "skin" : item.category === section.category
+            section.category === "skin" ? item.type === "skin" : section.category === "background" ? item.type === "background" : item.category === section.category
         );
 
         for (const [itemKey, item] of filtered) {
@@ -1363,7 +1363,7 @@ function triggerTemporaryLobbyPet(itemKey) {
 }
 
 function getLobbyPetImage() {
-    if (petDirty) return "koszos.png";
+    if (petDirty) return "koszos.jpg";
     if (hunger <= 35 && energy >= 35) return "ehes.png";
     if (energy < 35) return "faradt.png";
     if (hunger <= 35) return "ehes.png";
@@ -1771,7 +1771,7 @@ function finalizeRunStats() {
     clampStats();
     updateBars();
 
-    if (runCount >= 8 && !petDirty) {
+    if (runCount % 8 === 0 && !petDirty) {
         petDirty = true;
         updateLobbyPetState();
     }
