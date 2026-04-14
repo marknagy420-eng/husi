@@ -956,6 +956,9 @@ let player = { x: 200, y: 200, vy: 0, size: 50 };
 let gravity = 0.35;
 let jumpPower = -12;
 const PLATFORM_WIDTH = 70;
+const PLATFORM_HEIGHT = 12;
+const PLATFORM_RADIUS = 4;
+const BROKEN_GAP = 6;
 const PLATFORM_GAP_Y = 70;
 const PLATFORM_COUNT = 11;
 const LEVEL_JUMP_STEP = 7;
@@ -973,6 +976,7 @@ const BROKEN_PLATFORM_CHANCE = 0.2;
 
 let platforms = [];
 let floatingCoins = [];
+let fallingBrokenPieces = [];
 let highestY = 0;
 let runMaxHeight = 0;
 let jumpCount = 0;
@@ -987,6 +991,7 @@ function updateGameHud() {
 function createPlatforms() {
     platforms = [];
     floatingCoins = [];
+    fallingBrokenPieces = [];
     nextPlatformId = 0;
 
     let startY = canvas.height - 80;
@@ -1140,6 +1145,75 @@ function drawBackground() {
     }
 }
 
+function drawRoundedRect(x, y, w, h, radius) {
+    const r = Math.min(radius, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
+function drawPlatform(p) {
+    if (p.broken) {
+        const pieceWidth = (p.w - BROKEN_GAP) / 2;
+        ctx.fillStyle = "#5f4f45";
+        drawRoundedRect(p.x, p.y, pieceWidth, PLATFORM_HEIGHT, PLATFORM_RADIUS);
+        ctx.fill();
+        drawRoundedRect(p.x + pieceWidth + BROKEN_GAP, p.y, pieceWidth, PLATFORM_HEIGHT, PLATFORM_RADIUS);
+        ctx.fill();
+        ctx.strokeStyle = "#2c2622";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(p.x + pieceWidth - 2, p.y + 2);
+        ctx.lineTo(p.x + pieceWidth + 2, p.y + PLATFORM_HEIGHT - 2);
+        ctx.moveTo(p.x + pieceWidth + BROKEN_GAP - 2, p.y + 2);
+        ctx.lineTo(p.x + pieceWidth + BROKEN_GAP + 2, p.y + PLATFORM_HEIGHT - 2);
+        ctx.stroke();
+        return;
+    }
+
+    ctx.fillStyle = "#8B5A2B";
+    drawRoundedRect(p.x, p.y, p.w, PLATFORM_HEIGHT, PLATFORM_RADIUS);
+    ctx.fill();
+}
+
+function triggerBrokenPlatformFall(platform) {
+    if (platform.falling) return;
+    platform.falling = true;
+    const pieceWidth = (platform.w - BROKEN_GAP) / 2;
+    const leftX = platform.x;
+    const rightX = platform.x + pieceWidth + BROKEN_GAP;
+    fallingBrokenPieces.push(
+        {
+            x: leftX,
+            y: platform.y,
+            w: pieceWidth,
+            h: PLATFORM_HEIGHT,
+            vy: 1.4,
+            drift: -0.55,
+            rotation: 0,
+            spin: -0.035
+        },
+        {
+            x: rightX,
+            y: platform.y,
+            w: pieceWidth,
+            h: PLATFORM_HEIGHT,
+            vy: 1.4,
+            drift: 0.55,
+            rotation: 0,
+            spin: 0.035
+        }
+    );
+}
+
 function updateGame() {
     if (!gameRunning || gamePaused) return;
 
@@ -1155,23 +1229,17 @@ function updateGame() {
         for (let p of platforms) {
             p.y += diff;
         }
+        for (const piece of fallingBrokenPieces) {
+            piece.y += diff;
+        }
 
         highestY += diff;
         runMaxHeight += diff;
     }
 
     for (let p of platforms) {
-        ctx.fillStyle = p.broken ? "#5f4f45" : "#8B5A2B";
-        ctx.fillRect(p.x, p.y, p.w, 12);
-        if (p.broken) {
-            ctx.strokeStyle = "#2c2622";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(p.x + 8, p.y + 2);
-            ctx.lineTo(p.x + 24, p.y + 10);
-            ctx.moveTo(p.x + 34, p.y + 2);
-            ctx.lineTo(p.x + 48, p.y + 9);
-            ctx.stroke();
+        if (!p.falling) {
+            drawPlatform(p);
         }
 
         if (
@@ -1181,7 +1249,10 @@ function updateGame() {
             player.y + player.size >= p.y &&
             player.y + player.size <= p.y + 15
         ) {
-            if (p.broken) continue;
+            if (p.broken) {
+                triggerBrokenPlatformFall(p);
+                continue;
+            }
             player.y = p.y - player.size;
             player.vy = jumpPower;
             if (lastLandedPlatformId !== p.id) {
@@ -1202,6 +1273,21 @@ function updateGame() {
                 updateGameHud();
             }
         }
+    }
+
+    fallingBrokenPieces = fallingBrokenPieces.filter(piece => piece.y < canvas.height + 60);
+    for (const piece of fallingBrokenPieces) {
+        piece.vy += 0.28;
+        piece.y += piece.vy;
+        piece.x += piece.drift;
+        piece.rotation += piece.spin;
+        ctx.save();
+        ctx.translate(piece.x + piece.w / 2, piece.y + piece.h / 2);
+        ctx.rotate(piece.rotation);
+        ctx.fillStyle = "#5f4f45";
+        drawRoundedRect(-piece.w / 2, -piece.h / 2, piece.w, piece.h, PLATFORM_RADIUS);
+        ctx.fill();
+        ctx.restore();
     }
 
     for (const coin of floatingCoins) {
@@ -1236,6 +1322,7 @@ function updateGame() {
             p.x = getReachablePlatformX(topPlatform.x);
             p.w = PLATFORM_WIDTH;
             p.broken = Math.random() < BROKEN_PLATFORM_CHANCE;
+            p.falling = false;
             floatingCoins = floatingCoins.filter(coin => coin.platformId !== oldPlatformId);
             spawnCoinForPlatform(p);
         }
