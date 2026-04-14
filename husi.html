@@ -27,6 +27,36 @@ body {
     z-index: 5;
 }
 
+#petActionBubble {
+    position: fixed;
+    left: calc(50% + 90px);
+    top: 49vh;
+    z-index: 7;
+    display: none;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid #8f7a63;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+#lobbyClock {
+    position: fixed;
+    top: 12px;
+    left: 14px;
+    z-index: 65;
+    display: none;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: rgba(20, 20, 20, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    color: white;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+}
+
 button {
     margin: 5px;
     padding: 10px;
@@ -383,6 +413,8 @@ body > p:nth-of-type(3) { bottom: 30px; }
     border: 2px solid #d8b48a;
     border-radius: 14px;
     padding: 18px;
+    max-height: 85vh;
+    overflow-y: auto;
 }
 
 #storeTop {
@@ -486,14 +518,16 @@ body > p:nth-of-type(3) { bottom: 30px; }
 <div> <h1>Husi</h1>
 
 <img id="lobbyPet" src="karakter.png">
+<div id="petActionBubble"></div>
 </div>
-<p id="hungerLabel">Éhség</p>
+<div id="lobbyClock">00:00:00</div>
+<p id="hungerLabel">Éhség: 100/500</p>
 <div id="hunger" class="bar"></div>
 
-<p id="happyLabel">Boldogság</p>
+<p id="happyLabel">Boldogság: 100/500</p>
 <div id="happy" class="bar"></div>
 
-<p id="energyLabel">Energia</p>
+<p id="energyLabel">Energia: 100/500</p>
 <div id="energy" class="bar"></div>
 
 <br>
@@ -518,45 +552,17 @@ body > p:nth-of-type(3) { bottom: 30px; }
             </div>
         </div>
 
-        <h3>Fogyóeszközök</h3>
-        <div class="storeGrid">
-            <div class="storeCard">
-                <h4>🍖 Kaja</h4>
-                <p>+20 éhség</p>
-                <button onclick="buyStoreItem('food')">80 coin</button>
-            </div>
-            <div class="storeCard">
-                <h4>🎾 Játék</h4>
-                <p>+20 boldogság</p>
-                <button onclick="buyStoreItem('toy')">100 coin</button>
-            </div>
-            <div class="storeCard">
-                <h4>⚡ Energy ital</h4>
-                <p>+20 energia</p>
-                <button onclick="buyStoreItem('energy')">90 coin</button>
-            </div>
-        </div>
+        <h3>Kaja kategória</h3>
+        <div class="storeGrid" id="foodStoreGrid"></div>
+
+        <h3>Játékok kategória</h3>
+        <div class="storeGrid" id="gameStoreGrid"></div>
+
+        <h3>Energia kategória</h3>
+        <div class="storeGrid" id="energyStoreGrid"></div>
 
         <h3>Skinek</h3>
-        <div class="storeGrid">
-            <div class="storeCard">
-                <h4>🐶 Alap skin</h4>
-                <p>Ingyenes</p>
-                <button onclick="buyStoreItem('defaultSkin')">Használom</button>
-            </div>
-            <div class="storeCard">
-                <h4>😎 Cool skin</h4>
-                <img src="coolskin.png" alt="Cool skin" style="width:70px;height:70px;display:block;margin-bottom:8px;">
-                <p>150 coin</p>
-                <button onclick="buyStoreItem('coolSkin')">Megveszem / használom</button>
-            </div>
-            <div class="storeCard">
-                <h4>🔥 Legend skin</h4>
-                <img src="legendary.png" alt="Legendary skin" style="width:70px;height:70px;display:block;margin-bottom:8px;">
-                <p>250 coin</p>
-                <button onclick="buyStoreItem('legendSkin')">Megveszem / használom</button>
-            </div>
-        </div>
+        <div class="storeGrid" id="skinStoreGrid"></div>
 
         <div id="storeMessage"></div>
     </div>
@@ -794,6 +800,7 @@ function startGame() {
 
         setTimeout(() => {
             ls.style.display = "none";
+            updateClockVisibility();
         }, 1500);
 
     }, 3000);
@@ -801,21 +808,41 @@ function startGame() {
 
 /* UI */
 
+const MAX_STAT = 500;
 let hunger = 100;
 let happy = 100;
 let energy = 100;
 let coins = 0;
 let lastCareAt = Date.now();
 let activityScore = 0;
+let energyBoostDrainUntil = 0;
+let actionBubbleTimeout;
+let clockTimer = null;
 
 const STORE_ITEMS = {
-    food: { name: "🍖 Kaja", cost: 80, stat: "hunger", amount: 20 },
-    toy: { name: "🎾 Játék", cost: 100, stat: "happy", amount: 20 },
-    energy: { name: "⚡ Pihi ital", cost: 90, stat: "energy", amount: 20 },
+    dogFood: { name: "🐾 Kutyatáp", category: "food", cost: 150, effects: { hunger: 20 }, consumeText: "kutyatápot eszik" },
+    meat: { name: "🥩 Hús", category: "food", cost: 220, effects: { hunger: 30 }, consumeText: "húst eszik" },
+    bone: { name: "🦴 Csont", category: "food", cost: 60, effects: { hunger: 10 }, consumeText: "csontot rág" },
+    cookie: { name: "🍪 Süti", category: "food", cost: 300, effects: { hunger: 40 }, consumeText: "sütit eszik" },
+    treat: { name: "🧁 Jutalom falat", category: "food", cost: 75, effects: { happy: 15 }, consumeText: "jutalom falatot kap" },
+    iceCream: { name: "🍨 Fagyi", category: "food", cost: 110, effects: { hunger: 25, happy: 30 }, consumeText: "fagyit eszik" },
+    ball: { name: "🎾 Labda", category: "games", cost: 100, effects: { happy: 30 } },
+    rope: { name: "🪢 Kötél", category: "games", cost: 130, effects: { happy: 45 } },
+    teddy: { name: "🧸 Plüss maci", category: "games", cost: 285, effects: { happy: 60 } },
+    rubberChicken: { name: "🐔 Gumi csirke", category: "games", cost: 310, effects: { happy: 75 } },
+    chocolate: { name: "🍫 Csoki", category: "energy", cost: 90, effects: { energy: 35 } },
+    energyDrink: { name: "⚡ Energia ital", category: "energy", cost: 250, effects: { energy: 70 }, extra: "fatigueBoost" },
     defaultSkin: { name: "🐶 Alap skin", type: "skin", cost: 0, skin: "default" },
-    coolSkin: { name: "😎 Cool skin", type: "skin", cost: 150, skin: "cool" },
-    legendSkin: { name: "🔥 Legend skin", type: "skin", cost: 250, skin: "legend" }
+    coolSkin: { name: "😎 Cool skin", type: "skin", cost: 1500, skin: "cool" },
+    legendSkin: { name: "🔥 Legendary skin", type: "skin", cost: 50000, skin: "legend" }
 };
+
+const STORE_CATEGORY_CONFIG = [
+    { id: "foodStoreGrid", category: "food" },
+    { id: "gameStoreGrid", category: "games" },
+    { id: "energyStoreGrid", category: "energy" },
+    { id: "skinStoreGrid", category: "skin" }
+];
 
 const ownedSkins = new Set(["default"]);
 let currentSkin = "default";
@@ -830,6 +857,9 @@ function updateBars() {
     updateSingleBar("hunger", hunger);
     updateSingleBar("happy", happy);
     updateSingleBar("energy", energy);
+    document.getElementById("hungerLabel").innerText = `${t("hunger")}: ${Math.round(hunger)}/${MAX_STAT}`;
+    document.getElementById("happyLabel").innerText = `${t("happiness")}: ${Math.round(happy)}/${MAX_STAT}`;
+    document.getElementById("energyLabel").innerText = `${t("energy")}: ${Math.round(energy)}/${MAX_STAT}`;
     updateCareAlert();
 }
 
@@ -880,15 +910,42 @@ function updateCoinsUI() {
     document.getElementById("storeCoinDisplay").innerText = `💰 Coin: ${coins}`;
 }
 
+function renderStore() {
+    const items = Object.entries(STORE_ITEMS);
+    for (const section of STORE_CATEGORY_CONFIG) {
+        const grid = document.getElementById(section.id);
+        if (!grid) continue;
+        grid.innerHTML = "";
+
+        const filtered = items.filter(([, item]) =>
+            section.category === "skin" ? item.type === "skin" : item.category === section.category
+        );
+
+        for (const [itemKey, item] of filtered) {
+            const card = document.createElement("div");
+            card.className = "storeCard";
+            const effectText = item.type === "skin"
+                ? (item.cost === 0 ? "Ingyenes" : `${item.cost} coin`)
+                : Object.entries(item.effects)
+                    .map(([stat, value]) => `+${value} ${stat === "hunger" ? "éhség" : stat === "happy" ? "boldogság" : "energia"}`)
+                    .join(" • ");
+            card.innerHTML = `
+                <h4>${item.name}</h4>
+                ${item.skin ? `<img src="${SKIN_IMAGE_MAP[item.skin]}" alt="${item.name}" style="width:70px;height:70px;display:block;margin-bottom:8px;">` : ""}
+                <p>${effectText}</p>
+                <button onclick="buyStoreItem('${itemKey}')">${item.type === "skin" ? (item.cost === 0 ? t("use") : t("buyUse")) : `${item.cost} coin`}</button>
+            `;
+            grid.appendChild(card);
+        }
+    }
+}
+
 function updateSettingsToggles() {
     document.getElementById("soundToggleBtn").innerText = `${t("sound")}: ${soundEnabled ? t("on") : t("off")}`;
     document.getElementById("vibrationToggleBtn").innerText = `${t("vibration")}: ${vibrationEnabled ? t("on") : t("off")}`;
 }
 
 function applyTranslations() {
-    document.getElementById("hungerLabel").innerText = t("hunger");
-    document.getElementById("happyLabel").innerText = t("happiness");
-    document.getElementById("energyLabel").innerText = t("energy");
     document.getElementById("storeBtn").innerText = t("store");
     document.getElementById("miniGameBtn").innerText = t("miniGame");
     document.getElementById("settingsBtn").innerText = `⚙️ ${t("settings")}`;
@@ -905,14 +962,14 @@ function applyTranslations() {
     document.getElementById("pauseMenuBtn").innerText = t("menuExit");
     document.getElementById("gameOverTitle").innerText = t("gameOver");
     document.querySelector("#storeTop button").innerText = t("backLobby");
-    document.querySelector("#storeContent h3:nth-of-type(1)").innerText = t("consumables");
-    document.querySelector("#storeContent h3:nth-of-type(2)").innerText = t("skins");
     document.querySelector("#gameOverScreen h2").innerText = t("fell");
     document.querySelector("#gameOverScreen button:nth-of-type(1)").innerText = t("restart");
     document.querySelector("#gameOverScreen button:nth-of-type(2)").innerText = t("menu");
     document.querySelector("#gameOverScreen button:nth-of-type(3)").innerText = t("quit");
     updateSettingsToggles();
     updateGameHud();
+    updateBars();
+    renderStore();
 }
 
 function setLanguage(lang) {
@@ -922,9 +979,9 @@ function setLanguage(lang) {
 }
 
 function clampStats() {
-    hunger = Math.max(0, Math.min(200, hunger));
-    happy = Math.max(0, Math.min(200, happy));
-    energy = Math.max(0, Math.min(200, energy));
+    hunger = Math.max(0, Math.min(MAX_STAT, hunger));
+    happy = Math.max(0, Math.min(MAX_STAT, happy));
+    energy = Math.max(0, Math.min(MAX_STAT, energy));
 }
 
 function showStoreMessage(text) {
@@ -933,18 +990,22 @@ function showStoreMessage(text) {
 
 function openStore() {
     document.getElementById("storeScreen").style.display = "block";
+    updateClockVisibility();
 }
 
 function closeStore() {
     document.getElementById("storeScreen").style.display = "none";
+    updateClockVisibility();
 }
 
 function openSettings() {
     document.getElementById("settingsScreen").style.display = "block";
+    updateClockVisibility();
 }
 
 function closeSettings() {
     document.getElementById("settingsScreen").style.display = "none";
+    updateClockVisibility();
 }
 
 function toggleSound() {
@@ -1000,6 +1061,50 @@ function updateLobbyPetState() {
     }
     lobbyPet.style.top = currentLobbyRoom === "bathroom" ? "38vh" : "56vh";
     applySkin(currentSkin);
+    updatePetActionBubblePosition();
+}
+
+function showPetActionBubble(text) {
+    if (!text) return;
+    const bubble = document.getElementById("petActionBubble");
+    bubble.innerText = `🍽 ${text}`;
+    bubble.style.display = currentLobbyRoom === "main" && !gameRunning ? "block" : "none";
+    clearTimeout(actionBubbleTimeout);
+    actionBubbleTimeout = setTimeout(() => {
+        bubble.style.display = "none";
+    }, 2800);
+}
+
+function updatePetActionBubblePosition() {
+    const bubble = document.getElementById("petActionBubble");
+    bubble.style.top = currentLobbyRoom === "bathroom" ? "31vh" : "49vh";
+}
+
+function updateClock() {
+    const now = new Date();
+    document.getElementById("lobbyClock").innerText = `🕒 ${now.toLocaleTimeString("hu-HU", { hour12: false })}`;
+}
+
+function updateClockVisibility() {
+    const inLobbyOnly =
+        currentLobbyRoom === "main" &&
+        !gameRunning &&
+        document.getElementById("gameOverlay").style.display !== "block" &&
+        document.getElementById("gameOverScreen").style.display !== "block" &&
+        document.getElementById("storeScreen").style.display !== "block" &&
+        document.getElementById("settingsScreen").style.display !== "block" &&
+        document.getElementById("loadScreen").style.display !== "flex";
+    document.getElementById("lobbyClock").style.display = inLobbyOnly ? "block" : "none";
+}
+
+function startLobbyClock() {
+    if (clockTimer) clearInterval(clockTimer);
+    updateClock();
+    updateClockVisibility();
+    clockTimer = setInterval(() => {
+        updateClock();
+        updateClockVisibility();
+    }, 1000);
 }
 
 function buyStoreItem(itemKey) {
@@ -1029,10 +1134,12 @@ function buyStoreItem(itemKey) {
     }
 
     coins -= item.cost;
-
-    if (item.stat === "hunger") hunger += item.amount;
-    if (item.stat === "happy") happy += item.amount;
-    if (item.stat === "energy") energy += item.amount;
+    hunger += item.effects?.hunger || 0;
+    happy += item.effects?.happy || 0;
+    energy += item.effects?.energy || 0;
+    if (item.extra === "fatigueBoost") {
+        energyBoostDrainUntil = Date.now() + 120000;
+    }
     carePet();
 
     clampStats();
@@ -1040,6 +1147,9 @@ function buyStoreItem(itemKey) {
     updateLobbyPetState();
     updateCoinsUI();
     showStoreMessage(`${item.name} ${t("bought")}`);
+    if (item.category === "food") {
+        showPetActionBubble(item.consumeText || item.name);
+    }
 }
 
 /* A lobby #lobbyPet statikus dekoráció, a mozgás csak a canvas játékoson történik. */
@@ -1083,7 +1193,7 @@ const COIN_TYPES = {
     silver: { reward: 10, icon: "🥈", chance: 0.68 },
     gold: { reward: 20, icon: "🥇", chance: 0.32 }
 };
-const BROKEN_PLATFORM_CHANCE = 0;
+const BROKEN_PLATFORM_CHANCE = 0.16;
 
 let platforms = [];
 let floatingCoins = [];
@@ -1144,6 +1254,7 @@ function shouldPlatformHaveJet(platform, index = 0) {
 
 function spawnCoinForPlatform(platform, force = false) {
     if (platform.broken) return;
+    if (platform.jet) return;
     if (!force && Math.random() > COIN_CHANCE) return;
     const coinType = Math.random() < COIN_TYPES.gold.chance ? "gold" : "silver";
     floatingCoins.push({
@@ -1158,6 +1269,10 @@ function spawnCoinForPlatform(platform, force = false) {
 
 function spawnJetForPlatform(platform, index = 0) {
     if (platform.broken || !platform.jet) return;
+    if (floatingCoins.some(coin => coin.platformId === platform.id && !coin.collected)) {
+        platform.jet = false;
+        return;
+    }
     if (index % 8 !== 0 && Math.random() > JET_PLATFORM_CHANCE) {
         platform.jet = false;
         return;
@@ -1184,6 +1299,9 @@ function getReachablePlatformX(previousX) {
 function setLobbyPetVisible(isVisible) {
     const lobbyPet = document.getElementById("lobbyPet");
     lobbyPet.style.display = isVisible ? "block" : "none";
+    if (!isVisible) {
+        document.getElementById("petActionBubble").style.display = "none";
+    }
 }
 
 function setBottomNavVisible(isVisible) {
@@ -1195,6 +1313,7 @@ function openGame() {
     document.getElementById("gameOverScreen").style.display = "none";
     setLobbyPetVisible(false);
     setBottomNavVisible(false);
+    updateClockVisibility();
 
     resize();
 
@@ -1225,6 +1344,7 @@ function gameOver() {
     setPauseState(false);
     showStoreMessage(t("runEnded"));
     document.getElementById("gameOverScreen").style.display = "block";
+    updateClockVisibility();
 }
 
 function restartGame() {
@@ -1238,6 +1358,7 @@ function backToMenu() {
     setPauseState(false);
     setLobbyPetVisible(true);
     setBottomNavVisible(true);
+    updateClockVisibility();
 }
 
 function quitGame() {
@@ -1247,6 +1368,7 @@ function quitGame() {
     setPauseState(false);
     setLobbyPetVisible(true);
     setBottomNavVisible(true);
+    updateClockVisibility();
 }
 
 function setPauseState(paused) {
@@ -1557,10 +1679,12 @@ function updateGame() {
 
 updateBars();
 updateCoinsUI();
+renderStore();
 applySkin(currentSkin);
 updateLobbyPetState();
 applyTranslations();
 applyLobbyRoomVisuals();
+startLobbyClock();
 
 function playRoomFade(onMidpoint) {
     const fade = document.getElementById("fade");
@@ -1601,6 +1725,7 @@ function applyLobbyRoomVisuals() {
         roomArrow.innerText = "➡";
         roomArrow.title = t("roomNext");
     }
+    updateClockVisibility();
     updateCareAlert();
 }
 
@@ -1624,10 +1749,12 @@ setInterval(() => {
 
     if (gameRunning && !gamePaused) {
         hunger -= 0.08 + activityScore * 0.008;
-        energy -= 0.09 + activityScore * 0.01;
+        const boostedDrain = Date.now() < energyBoostDrainUntil ? 1.85 : 1;
+        energy -= (0.09 + activityScore * 0.01) * boostedDrain;
         activityScore = Math.max(0, activityScore - 0.2);
     } else {
-        energy -= 0.015;
+        const boostedDrain = Date.now() < energyBoostDrainUntil ? 1.45 : 1;
+        energy -= 0.015 * boostedDrain;
         activityScore = 0;
     }
 
