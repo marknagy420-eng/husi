@@ -911,8 +911,24 @@ function updateCareAlert() {
     if (message && currentLobbyRoom === "main" && !gameRunning) {
         careAlert.style.display = "block";
         careAlert.innerText = message;
+        if (!careAlertWasVisible) {
+            playSound("noti");
+        }
+        if (!careAlertSoundInterval) {
+            careAlertSoundInterval = setInterval(() => {
+                if (careAlert.style.display === "block") {
+                    playSound("noti");
+                }
+            }, 3000);
+        }
+        careAlertWasVisible = true;
     } else {
         careAlert.style.display = "none";
+        if (careAlertSoundInterval) {
+            clearInterval(careAlertSoundInterval);
+            careAlertSoundInterval = null;
+        }
+        careAlertWasVisible = false;
     }
 }
 
@@ -1028,6 +1044,7 @@ function openStore() {
 
 function closeStore() {
     document.getElementById("storeScreen").style.display = "none";
+    updateLobbyPetState();
     updateClockVisibility();
 }
 
@@ -1211,6 +1228,7 @@ function buyStoreItem(itemKey) {
     }
 
     coins -= item.cost;
+    triggerTemporaryLobbyPet(itemKey);
     hunger += item.effects?.hunger || 0;
     happy += item.effects?.happy || 0;
     energy += item.effects?.energy || 0;
@@ -1224,7 +1242,12 @@ function buyStoreItem(itemKey) {
     updateLobbyPetState();
     updateCoinsUI();
     showStoreMessage(`${item.name} ${t("bought")}`);
-    triggerTemporaryLobbyPet(itemKey);
+    if (EATING_ITEM_KEYS.has(itemKey)) {
+        playSound("eating");
+    }
+    if (itemKey === "energyDrink") {
+        playRepeatedSound("slurp", 4, 260);
+    }
     if (item.category === "food") {
         showPetActionBubble(item.consumeText || item.name);
     }
@@ -1387,6 +1410,7 @@ function setBottomNavVisible(isVisible) {
 }
 
 function openGame() {
+    stopTrackedSound("sadGameOver");
     document.getElementById("gameOverlay").style.display = "block";
     document.getElementById("gameOverScreen").style.display = "none";
     setLobbyPetVisible(false);
@@ -1421,15 +1445,18 @@ function gameOver() {
     gameRunning = false;
     setPauseState(false);
     showStoreMessage(t("runEnded"));
+    playSound("sad", { trackAs: "sadGameOver" });
     document.getElementById("gameOverScreen").style.display = "block";
     updateClockVisibility();
 }
 
 function restartGame() {
+    stopTrackedSound("sadGameOver");
     openGame();
 }
 
 function backToMenu() {
+    stopTrackedSound("sadGameOver");
     document.getElementById("gameOverlay").style.display = "none";
     document.getElementById("gameOverScreen").style.display = "none";
     gameRunning = false;
@@ -1440,6 +1467,7 @@ function backToMenu() {
 }
 
 function quitGame() {
+    stopTrackedSound("sadGameOver");
     document.getElementById("gameOverlay").style.display = "none";
     document.getElementById("gameOverScreen").style.display = "none";
     gameRunning = false;
@@ -1535,50 +1563,66 @@ function drawPlatform(p) {
 
 }
 
-let audioCtx = null;
+let activeLoopingSounds = {};
+let careAlertSoundInterval = null;
+let careAlertWasVisible = false;
+const SOUND_FILES = {
+    button: "button.mp3",
+    jump: "jumpsound.mp3",
+    levelUp: "levelup.mp3",
+    coin: "coin.mp3",
+    eating: "eating.mp3",
+    slurp: "slurp.mp3",
+    sad: "sad.mp3",
+    noti: "noti.mp3"
+};
+const AUDIO_CACHE = {};
+const EATING_ITEM_KEYS = new Set(["chocolate", "dogFood", "meat", "bone", "cookie", "treat", "iceCream"]);
 
-function ensureAudioContext() {
+function preloadAssets() {
+    Object.values(SOUND_FILES).forEach((src) => {
+        const audio = new Audio(src);
+        audio.preload = "auto";
+        AUDIO_CACHE[src] = audio;
+    });
+    Object.values(PURCHASE_PREVIEW_IMAGE_MAP).forEach((src) => {
+        const img = new Image();
+        img.src = src;
+    });
+}
+
+function playSound(name, options = {}) {
     if (!soundEnabled) return null;
-    if (!audioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return null;
-        audioCtx = new AudioContextClass();
+    const src = SOUND_FILES[name];
+    if (!src) return null;
+    const cached = AUDIO_CACHE[src] || new Audio(src);
+    AUDIO_CACHE[src] = cached;
+    const audio = cached.cloneNode();
+    audio.volume = options.volume ?? 1;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+    if (options.trackAs) {
+        activeLoopingSounds[options.trackAs] = audio;
     }
-    if (audioCtx.state === "suspended") {
-        audioCtx.resume();
-    }
-    return audioCtx;
+    return audio;
 }
 
-function playTone(type, frequency, duration, volume = 0.08, endFrequency = null) {
-    const ctx = ensureAudioContext();
-    if (!ctx) return;
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-    if (endFrequency !== null) {
-        oscillator.frequency.exponentialRampToValueAtTime(endFrequency, ctx.currentTime + duration);
+function playRepeatedSound(name, count, gapMs = 0, options = {}) {
+    for (let i = 0; i < count; i++) {
+        setTimeout(() => playSound(name, options), i * gapMs);
     }
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(volume, ctx.currentTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + duration + 0.01);
 }
 
-function playJumpSound(isJet = false) {
-    if (isJet) {
-        playTone("sawtooth", 280, 0.18, 0.1, 620);
-        return;
-    }
-    playTone("triangle", 410, 0.09, 0.06, 520);
+function stopTrackedSound(key) {
+    const audio = activeLoopingSounds[key];
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    delete activeLoopingSounds[key];
 }
 
-function playFallSound() {
-    playTone("sine", 220, 0.2, 0.09, 120);
+function playJumpSound() {
+    playSound("jump");
 }
 
 function triggerBrokenPlatformFall(platform) {
@@ -1652,7 +1696,6 @@ function updateGame() {
             }
             player.y = p.y - player.size;
             player.vy = jumpPower;
-            let didJetBoost = false;
             if (lastLandedPlatformId !== p.id) {
                 jumpCount++;
                 coins += 1;
@@ -1660,9 +1703,13 @@ function updateGame() {
                     coins += VIRTUAL_COIN_REWARD;
                     showStoreMessage(t("virtualCoin"));
                 }
-                playJumpSound(didJetBoost);
+                playJumpSound();
                 updateCoinsUI();
+                const previousLevel = level;
                 level = Math.floor(jumpCount / LEVEL_JUMP_STEP) + 1;
+                if (level > previousLevel) {
+                    playSound("levelUp");
+                }
                 lastLandedPlatformId = p.id;
                 updateGameHud();
             }
@@ -1700,6 +1747,7 @@ function updateGame() {
         if (hitX && hitY) {
             coin.collected = true;
             coins += COIN_TYPES[coin.type].reward;
+            playSound("coin");
             updateCoinsUI();
         }
     }
@@ -1720,7 +1768,7 @@ function updateGame() {
         if (hitX && hitY) {
             jet.collected = true;
             player.vy = Math.min(player.vy, jumpPower * 2.05);
-            playJumpSound(true);
+            playJumpSound();
             showBoostNotice();
             showStoreMessage(t("jetBoost"));
             if (vibrationEnabled && navigator.vibrate) navigator.vibrate(120);
@@ -1749,7 +1797,6 @@ function updateGame() {
     }
 
     if (player.y > canvas.height) {
-        playFallSound();
         gameOver();
     }
 
@@ -1763,11 +1810,18 @@ function updateGame() {
 updateBars();
 updateCoinsUI();
 renderStore();
+preloadAssets();
 applySkin(currentSkin);
 updateLobbyPetState();
 applyTranslations();
 applyLobbyRoomVisuals();
 startLobbyClock();
+
+document.addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    playSound("button", { volume: 0.9 });
+});
 
 function playRoomFade(onMidpoint) {
     const fade = document.getElementById("fade");
