@@ -486,6 +486,71 @@ body > p:nth-of-type(3) { bottom: 30px; }
     100% { opacity: 0.45; transform: translateX(-50%) scale(0.95); }
 }
 
+#levelUpNotice {
+    display: none;
+    position: fixed;
+    top: 27vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 61;
+    color: #8dff9c;
+    font-weight: bold;
+    font-size: 34px;
+    text-shadow: 0 0 10px rgba(78, 255, 122, 0.9);
+    animation: boostPulse 0.22s ease-in-out infinite;
+}
+
+#scoreboardScreen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 42;
+    background: rgba(15, 20, 25, 0.9);
+    color: white;
+    overflow-y: auto;
+}
+
+#scoreboardContent {
+    max-width: 720px;
+    margin: 32px auto;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #9bc3ff;
+    border-radius: 14px;
+    padding: 18px;
+    max-height: 85vh;
+    overflow-y: auto;
+    text-align: left;
+}
+
+#scoreboardTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.scoreRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 10px;
+}
+
+.petFadeSwap {
+    animation: petFadeSwap 0.55s ease;
+}
+
+@keyframes petFadeSwap {
+    0% { opacity: 1; transform: translateX(-50%) scale(1); }
+    50% { opacity: 0.25; transform: translateX(-50%) scale(0.93) rotate(-2deg); }
+    100% { opacity: 1; transform: translateX(-50%) scale(1) rotate(0deg); }
+}
+
 #careAlert {
     display: none;
     position: fixed;
@@ -596,6 +661,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 <div id="bottomNav">
     <button id="storeBtn" class="navBtn" onclick="openStore()">🛒 Store</button>
     <button id="miniGameBtn" class="navBtn" onclick="openGame()">🎮 Mini játék</button>
+    <button id="scoreboardBtn" class="navBtn" onclick="openScoreboard()">🏆 Scoreboard</button>
     <button id="settingsBtn" class="navBtn" onclick="openSettings()">⚙️ Beállítások</button>
 </div>
 <div id="careAlert"></div>
@@ -629,6 +695,23 @@ body > p:nth-of-type(3) { bottom: 30px; }
     </div>
 </div>
 
+<div id="scoreboardScreen">
+    <div id="scoreboardContent">
+        <div id="scoreboardTop">
+            <h2>🏆 Scoreboard</h2>
+            <button id="scoreboardBackBtn" onclick="closeScoreboard()">Vissza a lobbyba</button>
+        </div>
+        <div class="scoreRow"><span>Összesített score</span><strong id="sbTotalScore">0</strong></div>
+        <div class="scoreRow"><span>Legjobb score</span><strong id="sbBestScore">0</strong></div>
+        <div class="scoreRow"><span>Coinok összesen</span><strong id="sbTotalCoins">0</strong></div>
+        <div class="scoreRow"><span>Legutóbbi futam coin</span><strong id="sbLastCoins">0</strong></div>
+        <div class="scoreRow"><span>Összes játékidő</span><strong id="sbTotalDuration">00:00</strong></div>
+        <div class="scoreRow"><span>Legutóbbi futam idő</span><strong id="sbLastDuration">00:00</strong></div>
+        <div class="scoreRow"><span>Lejátszott futamok</span><strong id="sbRunCount">0</strong></div>
+        <div class="scoreRow"><span>Karakter állapot</span><strong id="sbPetState">Tiszta</strong></div>
+    </div>
+</div>
+
 <div id="settingsScreen">
     <div id="settingsPanel">
         <h2 id="settingsTitle">Beállítások</h2>
@@ -657,8 +740,9 @@ body > p:nth-of-type(3) { bottom: 30px; }
 </div>
 
 <div id="gameOverlay">
-    <div id="gameHud">Level 1 • Ugrás: 0</div>
+    <div id="gameHud">Level 1 • Score: 0</div>
     <div id="boostNotice">BOOST</div>
+    <div id="levelUpNotice">LEVEL UP!</div>
     <div id="pauseText">PAUSE</div>
     <button id="pauseMenuBtn" onclick="exitPausedToMenu()">Kilépés a menübe</button>
     <canvas id="game"></canvas>
@@ -691,6 +775,7 @@ const I18N = {
         store: "🛒 Store",
         miniGame: "🎮 Mini játék",
         settings: "Beállítások",
+        scoreboard: "🏆 Scoreboard",
         language: "Nyelv",
         sound: "Hang",
         vibration: "Vibrálás",
@@ -718,7 +803,7 @@ const I18N = {
         restart: "Újra",
         menu: "Menü",
         quit: "Kilépés",
-        levelJump: (level, jump) => `Szint ${level} • Ugrás: ${jump}`,
+        levelJump: (level, score) => `Szint ${level} • Score: ${score}`,
         roomNext: "Másik helység",
         roomBack: "Vissza a lobbyba",
         virtualCoin: "Virtuális coin bónusz +15",
@@ -732,6 +817,7 @@ const I18N = {
     en: {
         hunger: "Hunger", happiness: "Happiness", energy: "Energy", miniGame: "🎮 Mini game",
         store: "🛒 Store",
+        scoreboard: "🏆 Scoreboard",
         settings: "Settings", language: "Language", sound: "Sound", vibration: "Vibration",
         on: "On", off: "Off", exit: "Exit", tray: "Exit to tray", home: "Exit to home",
         close: "Close", backLobby: "Back to lobby", consumables: "Consumables", skins: "Skins",
@@ -739,7 +825,7 @@ const I18N = {
         activated: "activated.", bought: "purchased!", runEnded: "Run ended.", pause: "PAUSE",
         menuExit: "Exit to menu", gameOver: "GAME OVER", fell: "husi fell", restart: "Restart",
         pressStart: "PRESS TO START", loading: "LOADING",
-        menu: "Menu", quit: "Quit", levelJump: (level, jump) => `Level ${level} • Jump: ${jump}`,
+        menu: "Menu", quit: "Quit", levelJump: (level, score) => `Level ${level} • Score: ${score}`,
         roomNext: "Next room", roomBack: "Back to lobby", virtualCoin: "Virtual coin bonus +15",
         jetBoost: "JET BOOST!", boost: "BOOST", careNeedFood: "Husi is hungry. Buy food!",
         careNeedEnergy: "Husi is tired. Buy an energy drink!", careNeedHappy: "Husi is sad. Buy a toy!",
@@ -748,6 +834,7 @@ const I18N = {
     uk: {
         hunger: "Голод", happiness: "Щастя", energy: "Енергія", miniGame: "🎮 Міні-гра",
         store: "🛒 Магазин",
+        scoreboard: "🏆 Результати",
         settings: "Налаштування", language: "Мова", sound: "Звук", vibration: "Вібрація",
         on: "Увімк", off: "Вимк", exit: "Вихід", tray: "Вийти в трей", home: "Вийти в головне меню",
         close: "Закрити", backLobby: "Назад у лобі", consumables: "Витратні", skins: "Скіни",
@@ -755,7 +842,7 @@ const I18N = {
         activated: "активовано.", bought: "придбано!", runEnded: "Забіг завершено.", pause: "ПАУЗА",
         menuExit: "Вийти в меню", gameOver: "ГРУ ЗАВЕРШЕНО", fell: "husi впав", restart: "Рестарт",
         pressStart: "НАТИСНІТЬ ДЛЯ СТАРТУ", loading: "ЗАВАНТАЖЕННЯ",
-        menu: "Меню", quit: "Вийти", levelJump: (level, jump) => `Рівень ${level} • Стрибки: ${jump}`,
+        menu: "Меню", quit: "Вийти", levelJump: (level, score) => `Рівень ${level} • Score: ${score}`,
         roomNext: "Інша кімната", roomBack: "Назад у лобі", virtualCoin: "Бонус віртуальної монети +15",
         jetBoost: "JET BOOST!", boost: "BOOST", careNeedFood: "Husi голодний. Купи їжу!",
         careNeedEnergy: "Husi втомився. Купи енергетик!", careNeedHappy: "Husi сумує. Купи іграшку!",
@@ -764,6 +851,7 @@ const I18N = {
     de: {
         hunger: "Hunger", happiness: "Glück", energy: "Energie", miniGame: "🎮 Minispiel",
         store: "🛒 Store",
+        scoreboard: "🏆 Scoreboard",
         settings: "Einstellungen", language: "Sprache", sound: "Sound", vibration: "Vibration",
         on: "An", off: "Aus", exit: "Beenden", tray: "In Tray beenden", home: "Zum Hauptmenü",
         close: "Schließen", backLobby: "Zurück zur Lobby", consumables: "Verbrauchsitems", skins: "Skins",
@@ -771,7 +859,7 @@ const I18N = {
         activated: "aktiviert.", bought: "gekauft!", runEnded: "Run beendet.", pause: "PAUSE",
         menuExit: "Zum Menü", gameOver: "GAME OVER", fell: "husi ist gefallen", restart: "Neu starten",
         pressStart: "TIPPEN ZUM START", loading: "LADEN",
-        menu: "Menü", quit: "Beenden", levelJump: (level, jump) => `Level ${level} • Sprünge: ${jump}`,
+        menu: "Menü", quit: "Beenden", levelJump: (level, score) => `Level ${level} • Score: ${score}`,
         roomNext: "Anderer Raum", roomBack: "Zurück zur Lobby", virtualCoin: "Virtueller Coin-Bonus +15",
         jetBoost: "JET BOOST!", boost: "BOOST", careNeedFood: "Husi hat Hunger. Kauf Futter!",
         careNeedEnergy: "Husi ist müde. Kauf ein Energy-Getränk!", careNeedHappy: "Husi ist traurig. Kauf ein Spielzeug!",
@@ -780,6 +868,7 @@ const I18N = {
     zh: {
         hunger: "饥饿", happiness: "快乐", energy: "体力", miniGame: "🎮 迷你游戏",
         store: "🛒 商店",
+        scoreboard: "🏆 记分板",
         settings: "设置", language: "语言", sound: "声音", vibration: "震动",
         on: "开", off: "关", exit: "退出", tray: "退出到托盘", home: "退出到主页",
         close: "关闭", backLobby: "返回大厅", consumables: "消耗品", skins: "皮肤",
@@ -787,7 +876,7 @@ const I18N = {
         activated: "已激活。", bought: "已购买！", runEnded: "本局结束。", pause: "暂停",
         menuExit: "返回菜单", gameOver: "游戏结束", fell: "husi 掉下去了", restart: "重开",
         pressStart: "点击开始", loading: "加载中",
-        menu: "菜单", quit: "退出", levelJump: (level, jump) => `等级 ${level} • 跳跃: ${jump}`,
+        menu: "菜单", quit: "退出", levelJump: (level, score) => `等级 ${level} • Score: ${score}`,
         roomNext: "切换房间", roomBack: "返回大厅", virtualCoin: "虚拟金币奖励 +15",
         jetBoost: "喷射加速！", boost: "BOOST", careNeedFood: "Husi 饿了，去买食物！",
         careNeedEnergy: "Husi 累了，去买能量饮料！", careNeedHappy: "Husi 不开心了，去买玩具！",
@@ -875,6 +964,19 @@ let hunger = 100;
 let happy = 100;
 let energy = 100;
 let coins = 0;
+const SAVE_KEY = "husi_save_v2";
+let runCount = 0;
+let totalScore = 0;
+let bestScore = 0;
+let totalCoinsCollected = 0;
+let totalDurationMs = 0;
+let lastRunScore = 0;
+let lastRunCoins = 0;
+let lastRunDurationMs = 0;
+let petDirty = false;
+let bathSwipeProgress = 0;
+let bathLastDirection = 0;
+let bathLastX = 0;
 let lastCareAt = Date.now();
 let activityScore = 0;
 let energyBoostDrainUntil = 0;
@@ -936,6 +1038,57 @@ const ownedGameBackgrounds = new Set(["default"]);
 let currentGameBackground = "default";
 let temporaryLobbyPetImage = null;
 let temporaryLobbyPetTimer = null;
+let runStartAt = 0;
+
+function formatDuration(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function saveProgress() {
+    const payload = {
+        hunger, happy, energy, coins, runCount, totalScore, bestScore,
+        totalCoinsCollected, totalDurationMs, lastRunScore, lastRunCoins, lastRunDurationMs, petDirty
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+}
+
+function loadProgress() {
+    try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        hunger = Number(data.hunger ?? hunger);
+        happy = Number(data.happy ?? happy);
+        energy = Number(data.energy ?? energy);
+        coins = Number(data.coins ?? coins);
+        runCount = Number(data.runCount ?? runCount);
+        totalScore = Number(data.totalScore ?? totalScore);
+        bestScore = Number(data.bestScore ?? bestScore);
+        totalCoinsCollected = Number(data.totalCoinsCollected ?? totalCoinsCollected);
+        totalDurationMs = Number(data.totalDurationMs ?? totalDurationMs);
+        lastRunScore = Number(data.lastRunScore ?? lastRunScore);
+        lastRunCoins = Number(data.lastRunCoins ?? lastRunCoins);
+        lastRunDurationMs = Number(data.lastRunDurationMs ?? lastRunDurationMs);
+        petDirty = Boolean(data.petDirty) || runCount >= 8;
+        clampStats();
+    } catch (err) {
+        console.warn("Mentés betöltési hiba", err);
+    }
+}
+
+function refreshScoreboard() {
+    document.getElementById("sbTotalScore").innerText = totalScore;
+    document.getElementById("sbBestScore").innerText = bestScore;
+    document.getElementById("sbTotalCoins").innerText = totalCoinsCollected;
+    document.getElementById("sbLastCoins").innerText = lastRunCoins;
+    document.getElementById("sbTotalDuration").innerText = formatDuration(totalDurationMs);
+    document.getElementById("sbLastDuration").innerText = formatDuration(lastRunDurationMs);
+    document.getElementById("sbRunCount").innerText = runCount;
+    document.getElementById("sbPetState").innerText = petDirty ? "Koszos" : "Tiszta";
+}
 
 function updateBars() {
     updateSingleBar("hunger", hunger);
@@ -1058,6 +1211,7 @@ function updateSettingsToggles() {
 function applyTranslations() {
     document.getElementById("storeBtn").innerText = t("store");
     document.getElementById("miniGameBtn").innerText = t("miniGame");
+    document.getElementById("scoreboardBtn").innerText = t("scoreboard");
     document.getElementById("settingsBtn").innerText = `⚙️ ${t("settings")}`;
     document.getElementById("settingsTitle").innerText = t("settings");
     document.getElementById("langTitle").innerText = t("language");
@@ -1072,6 +1226,7 @@ function applyTranslations() {
     document.getElementById("pauseMenuBtn").innerText = t("menuExit");
     document.getElementById("gameOverTitle").innerText = t("gameOver");
     document.querySelector("#storeTop button").innerText = t("backLobby");
+    document.getElementById("scoreboardBackBtn").innerText = t("backLobby");
     document.querySelector("#gameOverScreen h2").innerText = t("fell");
     document.querySelector("#gameOverScreen button:nth-of-type(1)").innerText = t("restart");
     document.querySelector("#gameOverScreen button:nth-of-type(2)").innerText = t("menu");
@@ -1106,6 +1261,17 @@ function openStore() {
 function closeStore() {
     document.getElementById("storeScreen").style.display = "none";
     updateLobbyPetState();
+    updateClockVisibility();
+}
+
+function openScoreboard() {
+    refreshScoreboard();
+    document.getElementById("scoreboardScreen").style.display = "block";
+    updateClockVisibility();
+}
+
+function closeScoreboard() {
+    document.getElementById("scoreboardScreen").style.display = "none";
     updateClockVisibility();
 }
 
@@ -1154,6 +1320,7 @@ function exitToTray() {
 function exitToHome() {
     closeSettings();
     closeStore();
+    closeScoreboard();
     backToMenu();
 }
 
@@ -1173,6 +1340,7 @@ function canShowTemporaryLobbyPet() {
     return currentLobbyRoom === "main" &&
         !gameRunning &&
         document.getElementById("storeScreen").style.display !== "block" &&
+        document.getElementById("scoreboardScreen").style.display !== "block" &&
         document.getElementById("settingsScreen").style.display !== "block" &&
         document.getElementById("gameOverlay").style.display !== "block" &&
         document.getElementById("gameOverScreen").style.display !== "block";
@@ -1191,6 +1359,7 @@ function triggerTemporaryLobbyPet(itemKey) {
 }
 
 function getLobbyPetImage() {
+    if (petDirty) return "koszos.png";
     if (hunger <= 35 && energy >= 35) return "ehes.png";
     if (energy < 35) return "faradt.png";
     if (hunger <= 35) return "ehes.png";
@@ -1198,15 +1367,54 @@ function getLobbyPetImage() {
     return "karakter.png";
 }
 
+function setLobbyPetImageSmooth(nextSrc) {
+    const lobbyPet = document.getElementById("lobbyPet");
+    if (lobbyPet.src.endsWith(nextSrc)) return;
+    lobbyPet.classList.add("petFadeSwap");
+    lobbyPet.src = nextSrc;
+    setTimeout(() => lobbyPet.classList.remove("petFadeSwap"), 560);
+}
+
 function updateLobbyPetState() {
     const lobbyPet = document.getElementById("lobbyPet");
     const nextSrc = (temporaryLobbyPetImage && canShowTemporaryLobbyPet()) ? temporaryLobbyPetImage : getLobbyPetImage();
-    if (!lobbyPet.src.endsWith(nextSrc)) {
-        lobbyPet.src = nextSrc;
-    }
+    setLobbyPetImageSmooth(nextSrc);
     lobbyPet.style.top = currentLobbyRoom === "bathroom" ? "38vh" : "56vh";
     applySkin(currentSkin);
     updatePetActionBubblePosition();
+}
+
+function onBathPetSwipe(event) {
+    if (currentLobbyRoom !== "bathroom" || !petDirty) return;
+    if (event.buttons === 0 && event.type !== "pointerdown") return;
+    const currentX = event.clientX;
+    if (!bathLastX) {
+        bathLastX = currentX;
+        return;
+    }
+    const delta = currentX - bathLastX;
+    if (Math.abs(delta) < 12) return;
+    const direction = delta > 0 ? 1 : -1;
+    if (bathLastDirection && direction !== bathLastDirection) {
+        bathSwipeProgress++;
+    }
+    bathLastDirection = direction;
+    bathLastX = currentX;
+
+    if (bathSwipeProgress >= 10) {
+        petDirty = false;
+        bathSwipeProgress = 0;
+        bathLastDirection = 0;
+        bathLastX = 0;
+        updateLobbyPetState();
+        refreshScoreboard();
+        saveProgress();
+    }
+}
+
+function resetBathSwipeProgress() {
+    bathLastDirection = 0;
+    bathLastX = 0;
 }
 
 function showPetActionBubble(text) {
@@ -1237,6 +1445,7 @@ function updateClockVisibility() {
         document.getElementById("gameOverlay").style.display !== "block" &&
         document.getElementById("gameOverScreen").style.display !== "block" &&
         document.getElementById("storeScreen").style.display !== "block" &&
+        document.getElementById("scoreboardScreen").style.display !== "block" &&
         document.getElementById("settingsScreen").style.display !== "block" &&
         document.getElementById("loadScreen").style.display !== "flex";
     document.getElementById("lobbyClock").style.display = inLobbyOnly ? "block" : "none";
@@ -1271,6 +1480,7 @@ function buyStoreItem(itemKey) {
         applyGameBackground(item.background);
         updateCoinsUI();
         renderStore();
+        saveProgress();
         return;
     }
 
@@ -1288,6 +1498,7 @@ function buyStoreItem(itemKey) {
         updateCoinsUI();
         showStoreMessage(`${item.name} ${t("activated")}`);
         updateLobbyPetState();
+        saveProgress();
         return;
     }
 
@@ -1320,6 +1531,7 @@ function buyStoreItem(itemKey) {
     if (item.category === "food") {
         showPetActionBubble(item.consumeText || item.name);
     }
+    saveProgress();
 }
 
 /* A lobby #lobbyPet statikus dekoráció, a mozgás csak a canvas játékoson történik. */
@@ -1355,7 +1567,7 @@ const PLATFORM_RADIUS = 4;
 const BROKEN_GAP = 6;
 const PLATFORM_GAP_Y = 70;
 const PLATFORM_COUNT = 11;
-const LEVEL_JUMP_STEP = 7;
+const LEVEL_JUMP_STEP = 10;
 const PLATFORM_EDGE_MARGIN = 30;
 const PLATFORM_X_STEP = 95;
 const COIN_CHANCE = 0.45;
@@ -1375,12 +1587,24 @@ let fallingBrokenPieces = [];
 let highestY = 0;
 let runMaxHeight = 0;
 let jumpCount = 0;
+let runScore = 0;
 let level = 1;
 let lastLandedPlatformId = null;
 let nextPlatformId = 0;
 
 function updateGameHud() {
-    document.getElementById("gameHud").innerText = t("levelJump")(level, jumpCount);
+    document.getElementById("gameHud").innerText = t("levelJump")(level, runScore);
+}
+
+let levelUpNoticeTimeout;
+function showLevelUpNotice() {
+    const levelUpNotice = document.getElementById("levelUpNotice");
+    levelUpNotice.innerText = `LEVEL ${level}!`;
+    levelUpNotice.style.display = "block";
+    clearTimeout(levelUpNoticeTimeout);
+    levelUpNoticeTimeout = setTimeout(() => {
+        levelUpNotice.style.display = "none";
+    }, 780);
 }
 
 function createPlatforms() {
@@ -1483,6 +1707,7 @@ function setBottomNavVisible(isVisible) {
 
 function openGame() {
     stopTrackedSound("sadGameOver");
+    closeScoreboard();
     document.getElementById("gameOverlay").style.display = "block";
     document.getElementById("gameOverScreen").style.display = "none";
     setLobbyPetVisible(false);
@@ -1504,8 +1729,10 @@ function openGame() {
     highestY = player.y;
     runMaxHeight = 0;
     jumpCount = 0;
+    runScore = 0;
     level = 1;
     lastLandedPlatformId = null;
+    runStartAt = Date.now();
 
     createPlatforms();
     updateGameHud();
@@ -1516,10 +1743,35 @@ function openGame() {
 function gameOver() {
     gameRunning = false;
     setPauseState(false);
+    finalizeRunStats();
     showStoreMessage(t("runEnded"));
     playSound("sad", { trackAs: "sadGameOver" });
     document.getElementById("gameOverScreen").style.display = "block";
     updateClockVisibility();
+}
+
+function finalizeRunStats() {
+    const runDuration = Math.max(0, Date.now() - runStartAt);
+    runCount += 1;
+    lastRunScore = runScore;
+    lastRunCoins = Math.max(0, runScore);
+    lastRunDurationMs = runDuration;
+    totalScore += runScore;
+    totalCoinsCollected += lastRunCoins;
+    totalDurationMs += runDuration;
+    bestScore = Math.max(bestScore, runScore);
+
+    happy += 7;
+    energy += 5;
+    clampStats();
+    updateBars();
+
+    if (runCount >= 8 && !petDirty) {
+        petDirty = true;
+        updateLobbyPetState();
+    }
+    refreshScoreboard();
+    saveProgress();
 }
 
 function restartGame() {
@@ -1535,6 +1787,7 @@ function backToMenu() {
     setPauseState(false);
     setLobbyPetVisible(true);
     setBottomNavVisible(true);
+    refreshScoreboard();
     updateClockVisibility();
 }
 
@@ -1546,6 +1799,7 @@ function quitGame() {
     setPauseState(false);
     setLobbyPetVisible(true);
     setBottomNavVisible(true);
+    refreshScoreboard();
     updateClockVisibility();
 }
 
@@ -1563,6 +1817,10 @@ function exitPausedToMenu() {
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && document.getElementById("storeScreen").style.display === "block") {
         closeStore();
+        return;
+    }
+    if (e.key === "Escape" && document.getElementById("scoreboardScreen").style.display === "block") {
+        closeScoreboard();
         return;
     }
 
@@ -1797,8 +2055,10 @@ function updateGame() {
             if (lastLandedPlatformId !== p.id) {
                 jumpCount++;
                 coins += 1;
+                runScore += 1;
                 if (jumpCount % VIRTUAL_COIN_STEP === 0) {
                     coins += VIRTUAL_COIN_REWARD;
+                    runScore += VIRTUAL_COIN_REWARD;
                     showStoreMessage(t("virtualCoin"));
                 }
                 playJumpSound();
@@ -1807,6 +2067,7 @@ function updateGame() {
                 level = Math.floor(jumpCount / LEVEL_JUMP_STEP) + 1;
                 if (level > previousLevel) {
                     playSound("levelUp");
+                    showLevelUpNotice();
                 }
                 lastLandedPlatformId = p.id;
                 updateGameHud();
@@ -1845,8 +2106,10 @@ function updateGame() {
         if (hitX && hitY) {
             coin.collected = true;
             coins += COIN_TYPES[coin.type].reward;
+            runScore += COIN_TYPES[coin.type].reward;
             playSound("coin");
             updateCoinsUI();
+            updateGameHud();
         }
     }
 
@@ -1906,9 +2169,11 @@ function updateGame() {
     requestAnimationFrame(updateGame);
 }
 
+loadProgress();
 updateBars();
 updateCoinsUI();
 renderStore();
+refreshScoreboard();
 preloadAssets();
 applySkin(currentSkin);
 updateLobbyPetState();
@@ -1933,6 +2198,11 @@ canvas.addEventListener("pointermove", handleGamePointerMove);
 canvas.addEventListener("pointerup", stopGamePointerControl);
 canvas.addEventListener("pointercancel", stopGamePointerControl);
 canvas.addEventListener("pointerleave", stopGamePointerControl);
+const lobbyPetEl = document.getElementById("lobbyPet");
+lobbyPetEl.addEventListener("pointerdown", onBathPetSwipe);
+lobbyPetEl.addEventListener("pointermove", onBathPetSwipe);
+lobbyPetEl.addEventListener("pointerup", resetBathSwipeProgress);
+lobbyPetEl.addEventListener("pointerleave", resetBathSwipeProgress);
 
 function playRoomFade(onMidpoint) {
     const fade = document.getElementById("fade");
@@ -2010,6 +2280,10 @@ setInterval(() => {
     updateBars();
     updateLobbyPetState();
 }, 1000);
+
+setInterval(() => {
+    saveProgress();
+}, 10000);
 
 </script>
 
