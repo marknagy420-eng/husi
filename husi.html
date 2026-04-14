@@ -290,7 +290,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 }
 
 #settingsBtn {
-    max-width: 90px;
+    max-width: 170px;
 }
 
 #settingsScreen {
@@ -448,7 +448,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 <div id="bottomNav">
     <button id="storeBtn" class="navBtn" onclick="openStore()">🛒 Store</button>
     <button id="miniGameBtn" class="navBtn" onclick="openGame()">🎮 Mini játék</button>
-    <button id="settingsBtn" class="navBtn" onclick="openSettings()">⚙️</button>
+    <button id="settingsBtn" class="navBtn" onclick="openSettings()">⚙️ Beállítások</button>
 </div>
 
 <div id="storeScreen">
@@ -781,6 +781,7 @@ function applyTranslations() {
     document.getElementById("energyLabel").innerText = t("energy");
     document.getElementById("storeBtn").innerText = t("store");
     document.getElementById("miniGameBtn").innerText = t("miniGame");
+    document.getElementById("settingsBtn").innerText = `⚙️ ${t("settings")}`;
     document.getElementById("settingsTitle").innerText = t("settings");
     document.getElementById("langTitle").innerText = t("language");
     document.getElementById("audioTitle").innerText = t("sound");
@@ -967,7 +968,7 @@ const PLATFORM_X_STEP = 95;
 const COIN_CHANCE = 0.45;
 const VIRTUAL_COIN_STEP = 15;
 const VIRTUAL_COIN_REWARD = 15;
-const JET_STEP = 40;
+const JET_PLATFORM_CHANCE = 0.22;
 const COIN_TYPES = {
     silver: { reward: 10, icon: "🥈", chance: 0.68 },
     gold: { reward: 20, icon: "🥇", chance: 0.32 }
@@ -1002,7 +1003,8 @@ function createPlatforms() {
         x: previousX,
         y: startY,
         w: PLATFORM_WIDTH,
-        broken: false
+        broken: false,
+        jet: false
     });
     spawnCoinForPlatform(platforms[0], true);
 
@@ -1013,10 +1015,18 @@ function createPlatforms() {
             x: previousX,
             y: startY - i * PLATFORM_GAP_Y,
             w: PLATFORM_WIDTH,
-            broken: Math.random() < BROKEN_PLATFORM_CHANCE
+            broken: Math.random() < BROKEN_PLATFORM_CHANCE,
+            jet: false
         });
+        platforms[platforms.length - 1].jet = shouldPlatformHaveJet(platforms[platforms.length - 1], i);
         spawnCoinForPlatform(platforms[platforms.length - 1]);
     }
+}
+
+function shouldPlatformHaveJet(platform, index = 0) {
+    if (platform.broken) return false;
+    if (index > 0 && index % 4 === 0) return true;
+    return Math.random() < JET_PLATFORM_CHANCE;
 }
 
 function spawnCoinForPlatform(platform, force = false) {
@@ -1048,10 +1058,15 @@ function setLobbyPetVisible(isVisible) {
     lobbyPet.style.display = isVisible ? "block" : "none";
 }
 
+function setBottomNavVisible(isVisible) {
+    document.getElementById("bottomNav").style.display = isVisible ? "flex" : "none";
+}
+
 function openGame() {
     document.getElementById("gameOverlay").style.display = "block";
     document.getElementById("gameOverScreen").style.display = "none";
     setLobbyPetVisible(false);
+    setBottomNavVisible(false);
 
     resize();
 
@@ -1094,6 +1109,7 @@ function backToMenu() {
     gameRunning = false;
     setPauseState(false);
     setLobbyPetVisible(true);
+    setBottomNavVisible(true);
 }
 
 function quitGame() {
@@ -1102,6 +1118,7 @@ function quitGame() {
     gameRunning = false;
     setPauseState(false);
     setLobbyPetVisible(true);
+    setBottomNavVisible(true);
 }
 
 function setPauseState(paused) {
@@ -1182,6 +1199,57 @@ function drawPlatform(p) {
     ctx.fillStyle = "#8B5A2B";
     drawRoundedRect(p.x, p.y, p.w, PLATFORM_HEIGHT, PLATFORM_RADIUS);
     ctx.fill();
+
+    if (p.jet) {
+        ctx.font = "18px Arial";
+        ctx.fillText("🚀", p.x + p.w / 2 - 8, p.y - 6);
+    }
+}
+
+let audioCtx = null;
+
+function ensureAudioContext() {
+    if (!soundEnabled) return null;
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        audioCtx = new AudioContextClass();
+    }
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+    return audioCtx;
+}
+
+function playTone(type, frequency, duration, volume = 0.08, endFrequency = null) {
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+    if (endFrequency !== null) {
+        oscillator.frequency.exponentialRampToValueAtTime(endFrequency, ctx.currentTime + duration);
+    }
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(volume, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + duration + 0.01);
+}
+
+function playJumpSound(isJet = false) {
+    if (isJet) {
+        playTone("sawtooth", 280, 0.18, 0.1, 620);
+        return;
+    }
+    playTone("triangle", 410, 0.09, 0.06, 520);
+}
+
+function playFallSound() {
+    playTone("sine", 220, 0.2, 0.09, 120);
 }
 
 function triggerBrokenPlatformFall(platform) {
@@ -1255,6 +1323,13 @@ function updateGame() {
             }
             player.y = p.y - player.size;
             player.vy = jumpPower;
+            let didJetBoost = false;
+            if (p.jet) {
+                player.vy = jumpPower * 2.05;
+                didJetBoost = true;
+                showStoreMessage(t("jetBoost"));
+                if (vibrationEnabled && navigator.vibrate) navigator.vibrate(120);
+            }
             if (lastLandedPlatformId !== p.id) {
                 jumpCount++;
                 coins += 1;
@@ -1262,11 +1337,7 @@ function updateGame() {
                     coins += VIRTUAL_COIN_REWARD;
                     showStoreMessage(t("virtualCoin"));
                 }
-                if (jumpCount % JET_STEP === 0) {
-                    player.vy = jumpPower * 1.9;
-                    showStoreMessage(t("jetBoost"));
-                    if (vibrationEnabled && navigator.vibrate) navigator.vibrate(120);
-                }
+                playJumpSound(didJetBoost);
                 updateCoinsUI();
                 level = Math.floor(jumpCount / LEVEL_JUMP_STEP) + 1;
                 lastLandedPlatformId = p.id;
@@ -1322,6 +1393,7 @@ function updateGame() {
             p.x = getReachablePlatformX(topPlatform.x);
             p.w = PLATFORM_WIDTH;
             p.broken = Math.random() < BROKEN_PLATFORM_CHANCE;
+            p.jet = shouldPlatformHaveJet(p, nextPlatformId);
             p.falling = false;
             floatingCoins = floatingCoins.filter(coin => coin.platformId !== oldPlatformId);
             spawnCoinForPlatform(p);
@@ -1329,6 +1401,7 @@ function updateGame() {
     }
 
     if (player.y > canvas.height) {
+        playFallSound();
         gameOver();
     }
 
