@@ -1059,7 +1059,7 @@ const STORE_ITEMS = {
     coolSkin: { name: "😎 Cool skin", type: "skin", cost: 1500, skin: "cool" },
     legendSkin: { name: "🔥 Legendary skin", type: "skin", cost: 50000, skin: "legend" },
     halloweenBackground: { name: "🎃 Halloween háttér", type: "background", cost: 200, background: "halloween" },
-    cozyNightBackground: { name: "🌙 Éjszakai háttér", type: "background", cost: 200, background: "night" }
+    xmasBackground: { name: "🎄 Karácsonyi háttér", type: "background", cost: 200, background: "xmas" }
 };
 
 const STORE_CATEGORY_CONFIG = [
@@ -1080,8 +1080,8 @@ const SKIN_IMAGE_MAP = {
 };
 const GAME_BACKGROUND_IMAGE_MAP = {
     default: "ezkellneked.jpg",
-    halloween: "halloween.png",
-    night: "lobbynight.jpeg"
+    halloween: "halloween.jpg",
+    xmas: "xmas.jpg"
 };
 const PURCHASE_PREVIEW_IMAGE_MAP = {
     meat: "steak.png",
@@ -1261,7 +1261,7 @@ function renderStore() {
             card.innerHTML = `
                 <h4>${item.name}</h4>
                 ${item.skin ? `<img src="${SKIN_IMAGE_MAP[item.skin]}" alt="${item.name}" style="width:70px;height:70px;display:block;margin-bottom:8px;">` : ""}
-                ${item.background ? `<img src="${GAME_BACKGROUND_IMAGE_MAP[item.background]}" alt="${item.name}" style="width:100%;height:90px;object-fit:cover;border-radius:8px;display:block;margin-bottom:8px;">` : ""}
+                ${item.background ? `<img src="${GAME_BACKGROUND_IMAGE_MAP[item.background]}" alt="${item.name}" style="width:100%;height:90px;object-fit:cover;border-radius:8px;display:block;margin-bottom:6px;"><small style="display:block;opacity:0.8;margin-bottom:8px;">Előnézet</small>` : ""}
                 <p>${effectText}</p>
                 <button onclick="buyStoreItem('${itemKey}')">${buttonText}</button>
             `;
