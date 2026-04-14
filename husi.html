@@ -555,6 +555,16 @@ body > p:nth-of-type(3) { bottom: 30px; }
     100% { opacity: 1; transform: translateX(-50%) scale(1) rotate(0deg); }
 }
 
+.petCleaned {
+    animation: petCleaned 0.9s ease;
+}
+
+@keyframes petCleaned {
+    0% { filter: brightness(1); }
+    35% { filter: brightness(1.45) saturate(1.2); transform: translateX(-50%) scale(1.08); }
+    100% { filter: brightness(1); transform: translateX(-50%) scale(1); }
+}
+
 #careAlert {
     display: none;
     position: fixed;
@@ -736,6 +746,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 
         <h3 id="exitTitle">Kilépés</h3>
         <div class="settingsRow">
+            <button id="settingsScoreboardBtn" onclick="openScoreboardFromSettings()">🏆 Scoreboard</button>
             <button id="trayExitBtn" onclick="exitToTray()">Kilépés a tálcára</button>
             <button id="homeExitBtn" onclick="exitToHome()">Kilépés főmenüre</button>
             <button id="closeSettingsBtn" onclick="closeSettings()">Bezárás</button>
@@ -1224,6 +1235,7 @@ function applyTranslations() {
     document.getElementById("trayExitBtn").innerText = t("tray");
     document.getElementById("homeExitBtn").innerText = t("home");
     document.getElementById("closeSettingsBtn").innerText = t("close");
+    document.getElementById("settingsScoreboardBtn").innerText = t("scoreboard");
     document.getElementById("pressStart").innerText = t("pressStart");
     document.getElementById("loadingText").innerText = t("loading");
     document.getElementById("pauseText").innerText = t("pause");
@@ -1272,6 +1284,11 @@ function openScoreboard() {
     refreshScoreboard();
     document.getElementById("scoreboardScreen").style.display = "block";
     updateClockVisibility();
+}
+
+function openScoreboardFromSettings() {
+    closeSettings();
+    openScoreboard();
 }
 
 function closeScoreboard() {
@@ -1363,7 +1380,7 @@ function triggerTemporaryLobbyPet(itemKey) {
 }
 
 function getLobbyPetImage() {
-    if (petDirty) return "koszos.jpg";
+    if (petDirty) return "koszos.png";
     if (hunger <= 35 && energy >= 35) return "ehes.png";
     if (energy < 35) return "faradt.png";
     if (hunger <= 35) return "ehes.png";
@@ -1412,6 +1429,9 @@ function onBathPetSwipe(event) {
         bathLastDirection = 0;
         bathLastX = 0;
         updateLobbyPetState();
+        const lobbyPet = document.getElementById("lobbyPet");
+        lobbyPet.classList.add("petCleaned");
+        setTimeout(() => lobbyPet.classList.remove("petCleaned"), 920);
         refreshScoreboard();
         saveProgress();
     }
