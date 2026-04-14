@@ -66,6 +66,20 @@ body {
     letter-spacing: 0.08em;
 }
 
+#husiLevelBadge {
+    position: fixed;
+    top: 60px;
+    left: 14px;
+    z-index: 65;
+    display: none;
+    padding: 6px 12px;
+    border-radius: 12px;
+    background: rgba(20, 20, 20, 0.52);
+    border: 1px solid rgba(141, 255, 156, 0.72);
+    color: #c8ffd1;
+    font-weight: bold;
+}
+
 button {
     margin: 5px;
     padding: 10px;
@@ -216,6 +230,31 @@ body > p:nth-of-type(3) { bottom: 30px; }
     display: block;
     margin: 10px auto;
     width: 150px;
+}
+
+#runRewardPopup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 75;
+    width: min(86vw, 340px);
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(24, 24, 24, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+#runRewardPopup h3 {
+    margin: 0 0 8px;
+    color: #8dff9c;
+}
+
+#runRewardText {
+    margin: 0;
+    font-weight: bold;
 }
 
 /* LOAD SCREEN */
@@ -658,6 +697,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 <div id="petActionBubble"></div>
 </div>
 <div id="lobbyClock">00:00:00</div>
+<div id="husiLevelBadge">Husi level: 1</div>
 <p id="hungerLabel">Éhség: 100/500</p>
 <div id="hunger" class="bar"></div>
 
@@ -773,6 +813,10 @@ body > p:nth-of-type(3) { bottom: 30px; }
     <button onclick="restartGame()">Restart</button>
     <button onclick="backToMenu()">Menü</button>
     <button onclick="quitGame()">Quit</button>
+</div>
+<div id="runRewardPopup">
+    <h3>Jutalom</h3>
+    <p id="runRewardText">+0 boldogság • +0 energia</p>
 </div>
 
 <script>
@@ -1014,7 +1058,8 @@ const STORE_ITEMS = {
     defaultSkin: { name: "🐶 Alap skin", type: "skin", cost: 0, skin: "default" },
     coolSkin: { name: "😎 Cool skin", type: "skin", cost: 1500, skin: "cool" },
     legendSkin: { name: "🔥 Legendary skin", type: "skin", cost: 50000, skin: "legend" },
-    halloweenBackground: { name: "🎃 Halloween háttér", type: "background", cost: 100, background: "halloween" }
+    halloweenBackground: { name: "🎃 Halloween háttér", type: "background", cost: 200, background: "halloween" },
+    cozyNightBackground: { name: "🌙 Éjszakai háttér", type: "background", cost: 200, background: "night" }
 };
 
 const STORE_CATEGORY_CONFIG = [
@@ -1035,7 +1080,8 @@ const SKIN_IMAGE_MAP = {
 };
 const GAME_BACKGROUND_IMAGE_MAP = {
     default: "ezkellneked.jpg",
-    halloween: "halloween.png"
+    halloween: "halloween.png",
+    night: "lobbynight.jpeg"
 };
 const PURCHASE_PREVIEW_IMAGE_MAP = {
     meat: "steak.png",
@@ -1054,6 +1100,7 @@ let currentGameBackground = "default";
 let temporaryLobbyPetImage = null;
 let temporaryLobbyPetTimer = null;
 let runStartAt = 0;
+let husiLevel = 1;
 
 function formatDuration(ms) {
     const totalSeconds = Math.floor(ms / 1000);
@@ -1113,6 +1160,11 @@ function updateBars() {
     document.getElementById("happyLabel").innerText = `${t("happiness")}: ${Math.round(happy)}/${MAX_STAT}`;
     document.getElementById("energyLabel").innerText = `${t("energy")}: ${Math.round(energy)}/${MAX_STAT}`;
     updateCareAlert();
+}
+
+function recalculateHusiLevel() {
+    husiLevel = Math.min(100, Math.floor(totalScore / 3000) + 1);
+    document.getElementById("husiLevelBadge").innerText = `Husi level: ${husiLevel}`;
 }
 
 function updateSingleBar(id, value) {
@@ -1474,6 +1526,7 @@ function updateClockVisibility() {
         document.getElementById("settingsScreen").style.display !== "block" &&
         document.getElementById("loadScreen").style.display !== "flex";
     document.getElementById("lobbyClock").style.display = inLobbyOnly ? "block" : "none";
+    document.getElementById("husiLevelBadge").style.display = inLobbyOnly ? "block" : "none";
 }
 
 function startLobbyClock() {
@@ -1775,6 +1828,15 @@ function gameOver() {
     updateClockVisibility();
 }
 
+function showRunRewardPopup(happyGain, energyGain) {
+    const popup = document.getElementById("runRewardPopup");
+    document.getElementById("runRewardText").innerText = `+${happyGain} boldogság • +${energyGain} energia`;
+    popup.style.display = "block";
+    setTimeout(() => {
+        popup.style.display = "none";
+    }, 2600);
+}
+
 function finalizeRunStats() {
     const runDuration = Math.max(0, Date.now() - runStartAt);
     runCount += 1;
@@ -1786,10 +1848,14 @@ function finalizeRunStats() {
     totalDurationMs += runDuration;
     bestScore = Math.max(bestScore, runScore);
 
-    happy += 7;
-    energy += 5;
+    const happyGain = Math.floor(Math.random() * 5) + 2;
+    const energyGain = Math.floor(Math.random() * 4) + 1;
+    happy += happyGain;
+    energy += energyGain;
     clampStats();
     updateBars();
+    recalculateHusiLevel();
+    showRunRewardPopup(happyGain, energyGain);
 
     if (runCount % 8 === 0 && !petDirty) {
         petDirty = true;
@@ -2197,6 +2263,7 @@ function updateGame() {
 }
 
 loadProgress();
+recalculateHusiLevel();
 updateBars();
 updateCoinsUI();
 renderStore();
