@@ -254,6 +254,85 @@ body > p:nth-of-type(3) { bottom: 30px; }
     background: rgba(255, 255, 255, 0.9);
 }
 
+#bottomNav {
+    position: fixed;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    z-index: 55;
+    width: min(92vw, 540px);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 18px;
+    background: rgba(20, 20, 20, 0.24);
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(6px);
+}
+
+.navBtn {
+    flex: 1;
+    margin: 0;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.18);
+    color: white;
+    font-weight: bold;
+    min-height: 44px;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.navBtn:hover {
+    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#settingsBtn {
+    max-width: 90px;
+}
+
+#settingsScreen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    color: white;
+}
+
+#settingsPanel {
+    width: min(90vw, 520px);
+    margin: 8vh auto 0;
+    background: rgba(23, 23, 23, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 16px;
+    padding: 16px;
+}
+
+#settingsPanel h2 {
+    margin-top: 0;
+}
+
+.settingsRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.settingsRow button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+#storeArrow {
+    display: none;
+}
+
 #roomArrow {
     position: fixed;
     right: 15px;
@@ -363,9 +442,14 @@ body > p:nth-of-type(3) { bottom: 30px; }
 
 <br>
 
-<button id="miniGameBtn" onclick="openGame()">Mini játék</button>
 <button id="storeArrow" onclick="openStore()" title="Store">⬅</button>
 <button id="roomArrow" onclick="toggleLobbyRoom()" title="Másik helység">➡</button>
+
+<div id="bottomNav">
+    <button id="storeBtn" class="navBtn" onclick="openStore()">🛒 Store</button>
+    <button id="miniGameBtn" class="navBtn" onclick="openGame()">🎮 Mini játék</button>
+    <button id="settingsBtn" class="navBtn" onclick="openSettings()">⚙️</button>
+</div>
 
 <div id="storeScreen">
     <div id="storeContent">
@@ -421,6 +505,33 @@ body > p:nth-of-type(3) { bottom: 30px; }
     </div>
 </div>
 
+<div id="settingsScreen">
+    <div id="settingsPanel">
+        <h2 id="settingsTitle">Beállítások</h2>
+        <h3 id="langTitle">Nyelv</h3>
+        <div class="settingsRow">
+            <button onclick="setLanguage('hu')">Magyar</button>
+            <button onclick="setLanguage('en')">English</button>
+            <button onclick="setLanguage('uk')">Українська</button>
+            <button onclick="setLanguage('de')">Deutsch</button>
+            <button onclick="setLanguage('zh')">中文</button>
+        </div>
+
+        <h3 id="audioTitle">Hang</h3>
+        <div class="settingsRow">
+            <button id="soundToggleBtn" onclick="toggleSound()">Hang: Be</button>
+            <button id="vibrationToggleBtn" onclick="toggleVibration()">Vibrálás: Be</button>
+        </div>
+
+        <h3 id="exitTitle">Kilépés</h3>
+        <div class="settingsRow">
+            <button id="trayExitBtn" onclick="exitToTray()">Kilépés a tálcára</button>
+            <button id="homeExitBtn" onclick="exitToHome()">Kilépés főmenüre</button>
+            <button id="closeSettingsBtn" onclick="closeSettings()">Bezárás</button>
+        </div>
+    </div>
+</div>
+
 <div id="gameOverlay">
     <div id="gameHud">Level 1 • Ugrás: 0</div>
     <div id="pauseText">PAUSE</div>
@@ -430,7 +541,7 @@ body > p:nth-of-type(3) { bottom: 30px; }
 
 <!-- GAME OVER -->
 <div id="gameOverScreen">
-    <h1>GAME OVER</h1>
+    <h1 id="gameOverTitle">GAME OVER</h1>
     <h2>husi leesett</h2>
 
     <img src="szomoru.png">
@@ -443,6 +554,113 @@ body > p:nth-of-type(3) { bottom: 30px; }
 <script>
 
 let currentLobbyRoom = "main";
+let currentLang = "hu";
+let soundEnabled = true;
+let vibrationEnabled = true;
+
+const I18N = {
+    hu: {
+        hunger: "Éhség",
+        happiness: "Boldogság",
+        energy: "Energia",
+        store: "🛒 Store",
+        miniGame: "🎮 Mini játék",
+        settings: "Beállítások",
+        language: "Nyelv",
+        sound: "Hang",
+        vibration: "Vibrálás",
+        on: "Be",
+        off: "Ki",
+        exit: "Kilépés",
+        tray: "Kilépés a tálcára",
+        home: "Kilépés főmenüre",
+        close: "Bezárás",
+        backLobby: "Vissza a lobbyba",
+        consumables: "Fogyóeszközök",
+        skins: "Skinek",
+        buyUse: "Megveszem / használom",
+        use: "Használom",
+        notEnoughCoin: "Nincs elég coinod ehhez.",
+        activated: "aktiválva.",
+        bought: "megvéve!",
+        runEnded: "A futam véget ért.",
+        pause: "SZÜNET",
+        menuExit: "Kilépés a menübe",
+        gameOver: "GAME OVER",
+        fell: "husi leesett",
+        pressStart: "KOPPINTS AZ INDÍTÁSHOZ",
+        loading: "BETÖLTÉS",
+        restart: "Újra",
+        menu: "Menü",
+        quit: "Kilépés",
+        levelJump: (level, jump) => `Szint ${level} • Ugrás: ${jump}`,
+        roomNext: "Másik helység",
+        roomBack: "Vissza a lobbyba",
+        virtualCoin: "Virtuális coin bónusz +15",
+        jetBoost: "JET BOOST!",
+        trayFail: "A böngésző nem engedte bezárni, app elrejtve."
+    },
+    en: {
+        hunger: "Hunger", happiness: "Happiness", energy: "Energy", miniGame: "🎮 Mini game",
+        store: "🛒 Store",
+        settings: "Settings", language: "Language", sound: "Sound", vibration: "Vibration",
+        on: "On", off: "Off", exit: "Exit", tray: "Exit to tray", home: "Exit to home",
+        close: "Close", backLobby: "Back to lobby", consumables: "Consumables", skins: "Skins",
+        buyUse: "Buy / use", use: "Use", notEnoughCoin: "Not enough coins.",
+        activated: "activated.", bought: "purchased!", runEnded: "Run ended.", pause: "PAUSE",
+        menuExit: "Exit to menu", gameOver: "GAME OVER", fell: "husi fell", restart: "Restart",
+        pressStart: "PRESS TO START", loading: "LOADING",
+        menu: "Menu", quit: "Quit", levelJump: (level, jump) => `Level ${level} • Jump: ${jump}`,
+        roomNext: "Next room", roomBack: "Back to lobby", virtualCoin: "Virtual coin bonus +15",
+        jetBoost: "JET BOOST!", trayFail: "Browser blocked close, app hidden."
+    },
+    uk: {
+        hunger: "Голод", happiness: "Щастя", energy: "Енергія", miniGame: "🎮 Міні-гра",
+        store: "🛒 Магазин",
+        settings: "Налаштування", language: "Мова", sound: "Звук", vibration: "Вібрація",
+        on: "Увімк", off: "Вимк", exit: "Вихід", tray: "Вийти в трей", home: "Вийти в головне меню",
+        close: "Закрити", backLobby: "Назад у лобі", consumables: "Витратні", skins: "Скіни",
+        buyUse: "Купити / використати", use: "Використати", notEnoughCoin: "Недостатньо монет.",
+        activated: "активовано.", bought: "придбано!", runEnded: "Забіг завершено.", pause: "ПАУЗА",
+        menuExit: "Вийти в меню", gameOver: "ГРУ ЗАВЕРШЕНО", fell: "husi впав", restart: "Рестарт",
+        pressStart: "НАТИСНІТЬ ДЛЯ СТАРТУ", loading: "ЗАВАНТАЖЕННЯ",
+        menu: "Меню", quit: "Вийти", levelJump: (level, jump) => `Рівень ${level} • Стрибки: ${jump}`,
+        roomNext: "Інша кімната", roomBack: "Назад у лобі", virtualCoin: "Бонус віртуальної монети +15",
+        jetBoost: "JET BOOST!", trayFail: "Браузер заборонив закриття, додаток приховано."
+    },
+    de: {
+        hunger: "Hunger", happiness: "Glück", energy: "Energie", miniGame: "🎮 Minispiel",
+        store: "🛒 Store",
+        settings: "Einstellungen", language: "Sprache", sound: "Sound", vibration: "Vibration",
+        on: "An", off: "Aus", exit: "Beenden", tray: "In Tray beenden", home: "Zum Hauptmenü",
+        close: "Schließen", backLobby: "Zurück zur Lobby", consumables: "Verbrauchsitems", skins: "Skins",
+        buyUse: "Kaufen / nutzen", use: "Nutzen", notEnoughCoin: "Nicht genug Coins.",
+        activated: "aktiviert.", bought: "gekauft!", runEnded: "Run beendet.", pause: "PAUSE",
+        menuExit: "Zum Menü", gameOver: "GAME OVER", fell: "husi ist gefallen", restart: "Neu starten",
+        pressStart: "TIPPEN ZUM START", loading: "LADEN",
+        menu: "Menü", quit: "Beenden", levelJump: (level, jump) => `Level ${level} • Sprünge: ${jump}`,
+        roomNext: "Anderer Raum", roomBack: "Zurück zur Lobby", virtualCoin: "Virtueller Coin-Bonus +15",
+        jetBoost: "JET BOOST!", trayFail: "Browser blockierte das Schließen, App wurde versteckt."
+    },
+    zh: {
+        hunger: "饥饿", happiness: "快乐", energy: "体力", miniGame: "🎮 迷你游戏",
+        store: "🛒 商店",
+        settings: "设置", language: "语言", sound: "声音", vibration: "震动",
+        on: "开", off: "关", exit: "退出", tray: "退出到托盘", home: "退出到主页",
+        close: "关闭", backLobby: "返回大厅", consumables: "消耗品", skins: "皮肤",
+        buyUse: "购买 / 使用", use: "使用", notEnoughCoin: "金币不足。",
+        activated: "已激活。", bought: "已购买！", runEnded: "本局结束。", pause: "暂停",
+        menuExit: "返回菜单", gameOver: "游戏结束", fell: "husi 掉下去了", restart: "重开",
+        pressStart: "点击开始", loading: "加载中",
+        menu: "菜单", quit: "退出", levelJump: (level, jump) => `等级 ${level} • 跳跃: ${jump}`,
+        roomNext: "切换房间", roomBack: "返回大厅", virtualCoin: "虚拟金币奖励 +15",
+        jetBoost: "喷射加速！", trayFail: "浏览器阻止关闭，已隐藏应用。"
+    }
+};
+
+function t(key) {
+    return (I18N[currentLang] && I18N[currentLang][key]) || I18N.hu[key] || key;
+}
 
 /* 🌙 DAY/NIGHT BACKGROUND */
 
@@ -494,7 +712,7 @@ function startGame() {
     loadingInterval = setInterval(() => {
         dots = (dots + 1) % 4;
         document.getElementById("loadingText").innerText =
-            "LOADING" + ".".repeat(dots);
+            t("loading") + ".".repeat(dots);
     }, 400);
 
     setTimeout(() => {
@@ -552,6 +770,46 @@ function updateCoinsUI() {
     document.getElementById("storeCoinDisplay").innerText = `💰 Coin: ${coins}`;
 }
 
+function updateSettingsToggles() {
+    document.getElementById("soundToggleBtn").innerText = `${t("sound")}: ${soundEnabled ? t("on") : t("off")}`;
+    document.getElementById("vibrationToggleBtn").innerText = `${t("vibration")}: ${vibrationEnabled ? t("on") : t("off")}`;
+}
+
+function applyTranslations() {
+    document.getElementById("hungerLabel").innerText = t("hunger");
+    document.getElementById("happyLabel").innerText = t("happiness");
+    document.getElementById("energyLabel").innerText = t("energy");
+    document.getElementById("storeBtn").innerText = t("store");
+    document.getElementById("miniGameBtn").innerText = t("miniGame");
+    document.getElementById("settingsTitle").innerText = t("settings");
+    document.getElementById("langTitle").innerText = t("language");
+    document.getElementById("audioTitle").innerText = t("sound");
+    document.getElementById("exitTitle").innerText = t("exit");
+    document.getElementById("trayExitBtn").innerText = t("tray");
+    document.getElementById("homeExitBtn").innerText = t("home");
+    document.getElementById("closeSettingsBtn").innerText = t("close");
+    document.getElementById("pressStart").innerText = t("pressStart");
+    document.getElementById("loadingText").innerText = t("loading");
+    document.getElementById("pauseText").innerText = t("pause");
+    document.getElementById("pauseMenuBtn").innerText = t("menuExit");
+    document.getElementById("gameOverTitle").innerText = t("gameOver");
+    document.querySelector("#storeTop button").innerText = t("backLobby");
+    document.querySelector("#storeContent h3:nth-of-type(1)").innerText = t("consumables");
+    document.querySelector("#storeContent h3:nth-of-type(2)").innerText = t("skins");
+    document.querySelector("#gameOverScreen h2").innerText = t("fell");
+    document.querySelector("#gameOverScreen button:nth-of-type(1)").innerText = t("restart");
+    document.querySelector("#gameOverScreen button:nth-of-type(2)").innerText = t("menu");
+    document.querySelector("#gameOverScreen button:nth-of-type(3)").innerText = t("quit");
+    updateSettingsToggles();
+    updateGameHud();
+}
+
+function setLanguage(lang) {
+    if (!I18N[lang]) return;
+    currentLang = lang;
+    applyTranslations();
+}
+
 function clampStats() {
     hunger = Math.max(0, Math.min(200, hunger));
     happy = Math.max(0, Math.min(200, happy));
@@ -568,6 +826,44 @@ function openStore() {
 
 function closeStore() {
     document.getElementById("storeScreen").style.display = "none";
+}
+
+function openSettings() {
+    document.getElementById("settingsScreen").style.display = "block";
+}
+
+function closeSettings() {
+    document.getElementById("settingsScreen").style.display = "none";
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    updateSettingsToggles();
+}
+
+function toggleVibration() {
+    vibrationEnabled = !vibrationEnabled;
+    updateSettingsToggles();
+    if (vibrationEnabled && navigator.vibrate) {
+        navigator.vibrate(60);
+    }
+}
+
+function exitToTray() {
+    closeSettings();
+    try {
+        window.close();
+    } catch (e) {}
+    if (!document.hidden) {
+        document.body.style.display = "none";
+        alert(t("trayFail"));
+    }
+}
+
+function exitToHome() {
+    closeSettings();
+    closeStore();
+    backToMenu();
 }
 
 function applySkin(skinKey) {
@@ -602,7 +898,7 @@ function buyStoreItem(itemKey) {
     if (item.type === "skin") {
         if (!ownedSkins.has(item.skin)) {
             if (coins < item.cost) {
-                showStoreMessage("Nincs elég coinod ehhez.");
+                showStoreMessage(t("notEnoughCoin"));
                 return;
             }
             coins -= item.cost;
@@ -611,13 +907,13 @@ function buyStoreItem(itemKey) {
         currentSkin = item.skin;
         applySkin(currentSkin);
         updateCoinsUI();
-        showStoreMessage(`${item.name} aktiválva.`);
+        showStoreMessage(`${item.name} ${t("activated")}`);
         updateLobbyPetState();
         return;
     }
 
     if (coins < item.cost) {
-        showStoreMessage("Nincs elég coinod ehhez.");
+        showStoreMessage(t("notEnoughCoin"));
         return;
     }
 
@@ -632,7 +928,7 @@ function buyStoreItem(itemKey) {
     updateBars();
     updateLobbyPetState();
     updateCoinsUI();
-    showStoreMessage(`${item.name} megvéve!`);
+    showStoreMessage(`${item.name} ${t("bought")}`);
 }
 
 /* A lobby #lobbyPet statikus dekoráció, a mozgás csak a canvas játékoson történik. */
@@ -665,8 +961,15 @@ const PLATFORM_COUNT = 11;
 const LEVEL_JUMP_STEP = 7;
 const PLATFORM_EDGE_MARGIN = 30;
 const PLATFORM_X_STEP = 95;
-const COIN_CHANCE = 0.4;
-const COIN_REWARD = 5;
+const COIN_CHANCE = 0.45;
+const VIRTUAL_COIN_STEP = 15;
+const VIRTUAL_COIN_REWARD = 15;
+const JET_STEP = 40;
+const COIN_TYPES = {
+    silver: { reward: 10, icon: "🥈", chance: 0.68 },
+    gold: { reward: 20, icon: "🥇", chance: 0.32 }
+};
+const BROKEN_PLATFORM_CHANCE = 0.2;
 
 let platforms = [];
 let floatingCoins = [];
@@ -678,7 +981,7 @@ let lastLandedPlatformId = null;
 let nextPlatformId = 0;
 
 function updateGameHud() {
-    document.getElementById("gameHud").innerText = `Level ${level} • Ugrás: ${jumpCount}`;
+    document.getElementById("gameHud").innerText = t("levelJump")(level, jumpCount);
 }
 
 function createPlatforms() {
@@ -693,7 +996,8 @@ function createPlatforms() {
         id: nextPlatformId++,
         x: previousX,
         y: startY,
-        w: PLATFORM_WIDTH
+        w: PLATFORM_WIDTH,
+        broken: false
     });
     spawnCoinForPlatform(platforms[0], true);
 
@@ -703,16 +1007,20 @@ function createPlatforms() {
             id: nextPlatformId++,
             x: previousX,
             y: startY - i * PLATFORM_GAP_Y,
-            w: PLATFORM_WIDTH
+            w: PLATFORM_WIDTH,
+            broken: Math.random() < BROKEN_PLATFORM_CHANCE
         });
         spawnCoinForPlatform(platforms[platforms.length - 1]);
     }
 }
 
 function spawnCoinForPlatform(platform, force = false) {
+    if (platform.broken) return;
     if (!force && Math.random() > COIN_CHANCE) return;
+    const coinType = Math.random() < COIN_TYPES.gold.chance ? "gold" : "silver";
     floatingCoins.push({
         platformId: platform.id,
+        type: coinType,
         x: platform.x + platform.w / 2,
         y: platform.y - 18,
         collected: false,
@@ -767,7 +1075,7 @@ function openGame() {
 function gameOver() {
     gameRunning = false;
     setPauseState(false);
-    showStoreMessage("A futam véget ért.");
+    showStoreMessage(t("runEnded"));
     document.getElementById("gameOverScreen").style.display = "block";
 }
 
@@ -853,8 +1161,18 @@ function updateGame() {
     }
 
     for (let p of platforms) {
-        ctx.fillStyle = "#8B5A2B";
+        ctx.fillStyle = p.broken ? "#5f4f45" : "#8B5A2B";
         ctx.fillRect(p.x, p.y, p.w, 12);
+        if (p.broken) {
+            ctx.strokeStyle = "#2c2622";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(p.x + 8, p.y + 2);
+            ctx.lineTo(p.x + 24, p.y + 10);
+            ctx.moveTo(p.x + 34, p.y + 2);
+            ctx.lineTo(p.x + 48, p.y + 9);
+            ctx.stroke();
+        }
 
         if (
             player.vy > 0 &&
@@ -863,11 +1181,21 @@ function updateGame() {
             player.y + player.size >= p.y &&
             player.y + player.size <= p.y + 15
         ) {
+            if (p.broken) continue;
             player.y = p.y - player.size;
             player.vy = jumpPower;
             if (lastLandedPlatformId !== p.id) {
                 jumpCount++;
                 coins += 1;
+                if (jumpCount % VIRTUAL_COIN_STEP === 0) {
+                    coins += VIRTUAL_COIN_REWARD;
+                    showStoreMessage(t("virtualCoin"));
+                }
+                if (jumpCount % JET_STEP === 0) {
+                    player.vy = jumpPower * 1.9;
+                    showStoreMessage(t("jetBoost"));
+                    if (vibrationEnabled && navigator.vibrate) navigator.vibrate(120);
+                }
                 updateCoinsUI();
                 level = Math.floor(jumpCount / LEVEL_JUMP_STEP) + 1;
                 lastLandedPlatformId = p.id;
@@ -885,13 +1213,13 @@ function updateGame() {
         coin.bob += 0.08;
         const drawY = coin.y + Math.sin(coin.bob) * 4;
         ctx.font = "24px Arial";
-        ctx.fillText("🪙", coin.x - 10, drawY);
+        ctx.fillText(COIN_TYPES[coin.type].icon, coin.x - 10, drawY);
 
         const hitX = player.x + player.size > coin.x - 12 && player.x < coin.x + 12;
         const hitY = player.y + player.size > drawY - 24 && player.y < drawY + 6;
         if (hitX && hitY) {
             coin.collected = true;
-            coins += COIN_REWARD;
+            coins += COIN_TYPES[coin.type].reward;
             updateCoinsUI();
         }
     }
@@ -907,6 +1235,7 @@ function updateGame() {
             p.y = currentTopY - PLATFORM_GAP_Y;
             p.x = getReachablePlatformX(topPlatform.x);
             p.w = PLATFORM_WIDTH;
+            p.broken = Math.random() < BROKEN_PLATFORM_CHANCE;
             floatingCoins = floatingCoins.filter(coin => coin.platformId !== oldPlatformId);
             spawnCoinForPlatform(p);
         }
@@ -927,6 +1256,8 @@ updateBars();
 updateCoinsUI();
 applySkin(currentSkin);
 updateLobbyPetState();
+applyTranslations();
+applyLobbyRoomVisuals();
 
 function playRoomFade(onMidpoint) {
     const fade = document.getElementById("fade");
@@ -947,12 +1278,10 @@ function playRoomFade(onMidpoint) {
 
 function applyLobbyRoomVisuals() {
     const roomArrow = document.getElementById("roomArrow");
-    const storeArrow = document.getElementById("storeArrow");
     const lobbyStatsElements = [
         "hungerLabel", "hunger",
         "happyLabel", "happy",
-        "energyLabel", "energy",
-        "miniGameBtn"
+        "energyLabel", "energy"
     ];
 
     const showMainLobbyUi = currentLobbyRoom === "main";
@@ -963,13 +1292,11 @@ function applyLobbyRoomVisuals() {
     if (currentLobbyRoom === "bathroom") {
         document.body.style.backgroundImage = "url('furdo.jpeg')";
         roomArrow.innerText = "⬅";
-        roomArrow.title = "Vissza a lobbyba";
-        storeArrow.style.display = "none";
+        roomArrow.title = t("roomBack");
     } else {
         updateLobbyBackground();
         roomArrow.innerText = "➡";
-        roomArrow.title = "Másik helység";
-        storeArrow.style.display = "block";
+        roomArrow.title = t("roomNext");
     }
 }
 
