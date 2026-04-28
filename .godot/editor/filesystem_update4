@@ -1,0 +1,7 @@
+res://scripts/main/Main.gd
+res://scripts/minigame/Minigame.gd
+res://scripts/pet/Pet.gd
+res://scripts/save/SaveManager.gd
+res://scripts/shop/Shop.gd
+res://scripts/ui/HUD.gd
+res://scripts/settings/Settings.gd

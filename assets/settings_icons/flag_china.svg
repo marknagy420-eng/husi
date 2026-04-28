@@ -1,0 +1,31 @@
+<svg width="160" height="110" viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="12" width="144" height="86" rx="16" fill="#222"/>
+  
+  <clipPath id="flagClipCN">
+    <rect x="10" y="14" width="140" height="82" rx="14"/>
+  </clipPath>
+
+  <g clip-path="url(#flagClipCN)">
+    <!-- Background -->
+    <rect x="10" y="14" width="140" height="82" fill="#DE2910"/>
+
+    <!-- Big star -->
+    <polygon fill="#FFDE00"
+      points="32,26 35,34 44,34 37,39 40,47 32,42 24,47 27,39 20,34 29,34"/>
+
+    <!-- Small stars -->
+    <polygon fill="#FFDE00"
+      points="52,22 53,25 56,25 54,27 55,30 52,28 49,30 50,27 48,25 51,25"/>
+      
+    <polygon fill="#FFDE00"
+      points="60,30 61,33 64,33 62,35 63,38 60,36 57,38 58,35 56,33 59,33"/>
+      
+    <polygon fill="#FFDE00"
+      points="60,42 61,45 64,45 62,47 63,50 60,48 57,50 58,47 56,45 59,45"/>
+      
+    <polygon fill="#FFDE00"
+      points="52,50 53,53 56,53 54,55 55,58 52,56 49,58 50,55 48,53 51,53"/>
+  </g>
+
+  <rect x="10" y="14" width="140" height="82" rx="14" fill="none" stroke="#111" stroke-width="3"/>
+</svg>

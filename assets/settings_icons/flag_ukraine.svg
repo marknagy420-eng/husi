@@ -1,0 +1,13 @@
+<svg width="160" height="110" viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="12" width="144" height="86" rx="16" fill="#222"/>
+  <clipPath id="flagClipUA">
+    <rect x="10" y="14" width="140" height="82" rx="14"/>
+  </clipPath>
+
+  <g clip-path="url(#flagClipUA)">
+    <rect x="10" y="14" width="140" height="41" fill="#0057B7"/>
+    <rect x="10" y="55" width="140" height="41" fill="#FFD700"/>
+  </g>
+
+  <rect x="10" y="14" width="140" height="82" rx="14" fill="none" stroke="#111" stroke-width="3"/>
+</svg>

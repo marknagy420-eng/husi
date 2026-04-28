@@ -1,0 +1,632 @@
+[gd_scene load_steps=28 format=3]
+
+[ext_resource type="Script" path="res://scripts/settings/Settings.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/ui_icons/star.png" id="2"]
+[ext_resource type="Texture2D" path="res://assets/ui_icons/edit_pencil.png" id="3"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/settings_language.svg" id="7"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/flag_hungary.svg" id="8"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/flag_germany.svg" id="9"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/flag_english.svg" id="10"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/flag_china.svg" id="11"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/flag_ukraine.svg" id="12"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/settings_sound.png" id="13"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/settings_vibration.png" id="14"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/settings_exit_controller.png" id="15"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/settings_scoreboard_trophy.png" id="16"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/settings_board_exit.png" id="17"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/settings_home_exit.png" id="18"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/settings_power_close.png" id="19"]
+[ext_resource type="Texture2D" path="res://assets/settings_icons/settings_close_x.png" id="20"]
+
+[sub_resource type="StyleBoxFlat" id="OuterPanel"]
+bg_color = Color(1, 0.92, 0.82, 0.985)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.42, 0.24, 0.13, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+shadow_color = Color(0, 0, 0, 0.42)
+shadow_size = 16
+shadow_offset = Vector2(0, 7)
+content_margin_left = 22
+content_margin_top = 22
+content_margin_right = 22
+content_margin_bottom = 22
+
+[sub_resource type="StyleBoxFlat" id="NamePanel"]
+bg_color = Color(0.37, 0.2, 0.095, 0.98)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.72, 0.45, 0.22, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.28)
+shadow_size = 7
+shadow_offset = Vector2(0, 4)
+content_margin_left = 15
+content_margin_top = 6
+content_margin_right = 15
+content_margin_bottom = 6
+
+[sub_resource type="StyleBoxFlat" id="CloseButton"]
+bg_color = Color(0.5, 0.29, 0.14, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.77, 0.55, 0.34, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.25)
+shadow_size = 5
+shadow_offset = Vector2(0, 3)
+
+[sub_resource type="StyleBoxFlat" id="SectionPanel"]
+bg_color = Color(1, 0.965, 0.89, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.86, 0.62, 0.35, 0.62)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0.64, 0.38, 0.17, 0.16)
+shadow_size = 7
+shadow_offset = Vector2(0, 4)
+content_margin_left = 14
+content_margin_top = 10
+content_margin_right = 14
+content_margin_bottom = 12
+
+[sub_resource type="StyleBoxFlat" id="LanguageSelected"]
+bg_color = Color(0.77, 0.58, 1, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52, 0.25, 0.95, 0.95)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.54, 0.32, 0.14, 0.16)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+content_margin_left = 8
+content_margin_top = 7
+content_margin_right = 8
+content_margin_bottom = 7
+
+[sub_resource type="StyleBoxFlat" id="LanguageNormal"]
+bg_color = Color(1, 0.945, 0.86, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.81, 0.52, 0.27, 0.82)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.54, 0.32, 0.14, 0.13)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+content_margin_left = 8
+content_margin_top = 7
+content_margin_right = 8
+content_margin_bottom = 7
+
+[sub_resource type="StyleBoxFlat" id="AudioFill"]
+bg_color = Color(0.55, 0.78, 0.18, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="AudioTrack"]
+bg_color = Color(0.22, 0.32, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.48, 0.29, 0.12, 0.8)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="ActionButton"]
+bg_color = Color(1, 0.92, 0.79, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.78, 0.47, 0.22, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.54, 0.32, 0.14, 0.12)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+content_margin_left = 10
+content_margin_top = 7
+content_margin_right = 10
+content_margin_bottom = 7
+
+[sub_resource type="StyleBoxFlat" id="RedButton"]
+bg_color = Color(1, 0.72, 0.7, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.9, 0.24, 0.2, 0.75)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 10
+content_margin_top = 7
+content_margin_right = 10
+content_margin_bottom = 7
+
+[sub_resource type="StyleBoxFlat" id="GreenIconButton"]
+bg_color = Color(0.55, 0.78, 0.18, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.45, 0.08, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.22)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[node name="Settings" type="Control"]
+visible = false
+z_index = 100
+z_as_relative = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0.08, 0.035, 0.015, 0.48)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -285.0
+offset_top = -310.0
+offset_right = 285.0
+offset_bottom = 310.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("OuterPanel")
+
+[node name="Content" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TopArea" type="Control" parent="Panel/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 122)
+
+[node name="Title" type="Label" parent="Panel/Content/TopArea"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 0.0
+offset_bottom = 42.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.28, 0.15, 0.075, 1)
+theme_override_colors/font_shadow_color = Color(1, 1, 1, 0.65)
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 34
+text = "‹  Beállítások  ›"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="Panel/Content/TopArea"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -46.0
+offset_top = 0.0
+offset_right = -2.0
+offset_bottom = 44.0
+grow_horizontal = 0
+theme_override_styles/normal = SubResource("CloseButton")
+theme_override_styles/hover = SubResource("CloseButton")
+theme_override_styles/pressed = SubResource("CloseButton")
+icon = ExtResource("20")
+expand_icon = true
+
+[node name="LeftRibbonTail" type="Polygon2D" parent="Panel/Content/TopArea"]
+position = Vector2(143, 66)
+color = Color(0.31, 0.17, 0.08, 1)
+polygon = PackedVector2Array(-58, -19, 18, -19, 18, 19, -58, 19, -42, 0)
+
+[node name="RightRibbonTail" type="Polygon2D" parent="Panel/Content/TopArea"]
+position = Vector2(426, 66)
+color = Color(0.31, 0.17, 0.08, 1)
+polygon = PackedVector2Array(58, -19, -18, -19, -18, 19, 58, 19, 42, 0)
+
+[node name="NameRibbon" type="PanelContainer" parent="Panel/Content/TopArea"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 45.0
+offset_right = 150.0
+offset_bottom = 94.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("NamePanel")
+
+[node name="NameRow" type="HBoxContainer" parent="Panel/Content/TopArea/NameRibbon"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="StarIcon" type="TextureRect" parent="Panel/Content/TopArea/NameRibbon/NameRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(26, 26)
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="Panel/Content/TopArea/NameRibbon/NameRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 3
+theme_override_constants/shadow_offset_y = 3
+theme_override_font_sizes/font_size = 32
+text = "Husi"
+vertical_alignment = 1
+
+[node name="EditIcon" type="TextureRect" parent="Panel/Content/TopArea/NameRibbon/NameRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(24, 24)
+texture = ExtResource("3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LanguageSection" type="PanelContainer" parent="Panel/Content"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("SectionPanel")
+
+[node name="LanguageBox" type="VBoxContainer" parent="Panel/Content/LanguageSection"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LanguageHeader" type="HBoxContainer" parent="Panel/Content/LanguageSection/LanguageBox"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="LanguageIcon" type="TextureRect" parent="Panel/Content/LanguageSection/LanguageBox/LanguageHeader"]
+layout_mode = 2
+custom_minimum_size = Vector2(38, 38)
+texture = ExtResource("7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LanguageTitle" type="Label" parent="Panel/Content/LanguageSection/LanguageBox/LanguageHeader"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.11, 0.055, 1)
+theme_override_font_sizes/font_size = 20
+text = "Nyelv"
+vertical_alignment = 1
+
+[node name="LanguageRow" type="HBoxContainer" parent="Panel/Content/LanguageSection/LanguageBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HungarianButton" type="Button" parent="Panel/Content/LanguageSection/LanguageBox/LanguageRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(94, 50)
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.16, 0.08, 0.04, 1)
+theme_override_constants/icon_max_width = 38
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("LanguageSelected")
+theme_override_styles/hover = SubResource("LanguageSelected")
+theme_override_styles/pressed = SubResource("LanguageSelected")
+icon = ExtResource("8")
+expand_icon = true
+text = "Magyar"
+
+[node name="GermanButton" type="Button" parent="Panel/Content/LanguageSection/LanguageBox/LanguageRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(94, 50)
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.16, 0.08, 0.04, 1)
+theme_override_constants/icon_max_width = 38
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("LanguageNormal")
+theme_override_styles/hover = SubResource("LanguageNormal")
+theme_override_styles/pressed = SubResource("LanguageSelected")
+icon = ExtResource("9")
+expand_icon = true
+text = "Deutsch"
+
+[node name="EnglishButton" type="Button" parent="Panel/Content/LanguageSection/LanguageBox/LanguageRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(94, 50)
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.16, 0.08, 0.04, 1)
+theme_override_constants/icon_max_width = 38
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("LanguageNormal")
+theme_override_styles/hover = SubResource("LanguageNormal")
+theme_override_styles/pressed = SubResource("LanguageSelected")
+icon = ExtResource("10")
+expand_icon = true
+text = "English"
+
+[node name="ChineseButton" type="Button" parent="Panel/Content/LanguageSection/LanguageBox/LanguageRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(94, 50)
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.16, 0.08, 0.04, 1)
+theme_override_constants/icon_max_width = 38
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("LanguageNormal")
+theme_override_styles/hover = SubResource("LanguageNormal")
+theme_override_styles/pressed = SubResource("LanguageSelected")
+icon = ExtResource("11")
+expand_icon = true
+text = "中文"
+
+[node name="UkrainianButton" type="Button" parent="Panel/Content/LanguageSection/LanguageBox/LanguageRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(112, 50)
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.16, 0.08, 0.04, 1)
+theme_override_constants/icon_max_width = 0
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("LanguageNormal")
+theme_override_styles/hover = SubResource("LanguageNormal")
+theme_override_styles/pressed = SubResource("LanguageSelected")
+text = "      Українська"
+
+[node name="UkrainianFlagIcon" type="TextureRect" parent="Panel/Content/LanguageSection/LanguageBox/LanguageRow/UkrainianButton"]
+layout_mode = 1
+offset_left = 8.0
+offset_top = 10.0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+texture = ExtResource("12")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AudioSection" type="PanelContainer" parent="Panel/Content"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("SectionPanel")
+
+[node name="AudioBox" type="VBoxContainer" parent="Panel/Content/AudioSection"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AudioHeader" type="HBoxContainer" parent="Panel/Content/AudioSection/AudioBox"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="AudioIcon" type="TextureRect" parent="Panel/Content/AudioSection/AudioBox/AudioHeader"]
+layout_mode = 2
+custom_minimum_size = Vector2(38, 38)
+texture = ExtResource("13")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AudioTitle" type="Label" parent="Panel/Content/AudioSection/AudioBox/AudioHeader"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.11, 0.055, 1)
+theme_override_font_sizes/font_size = 20
+text = "Hang"
+vertical_alignment = 1
+
+[node name="SoundRow" type="HBoxContainer" parent="Panel/Content/AudioSection/AudioBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="SoundText" type="Label" parent="Panel/Content/AudioSection/AudioBox/SoundRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(105, 30)
+theme_override_colors/font_color = Color(0.18, 0.09, 0.04, 1)
+theme_override_font_sizes/font_size = 16
+text = "Hang: Be"
+vertical_alignment = 1
+
+[node name="SoundLevel" type="ProgressBar" parent="Panel/Content/AudioSection/AudioBox/SoundRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 16)
+size_flags_horizontal = 3
+max_value = 100.0
+value = 100.0
+show_percentage = false
+theme_override_styles/background = SubResource("AudioTrack")
+theme_override_styles/fill = SubResource("AudioFill")
+
+[node name="SoundToggleButton" type="Button" parent="Panel/Content/AudioSection/AudioBox/SoundRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(58, 40)
+theme_override_constants/icon_max_width = 40
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("GreenIconButton")
+theme_override_styles/hover = SubResource("GreenIconButton")
+theme_override_styles/pressed = SubResource("GreenIconButton")
+icon = ExtResource("13")
+expand_icon = true
+
+[node name="VibrationRow" type="HBoxContainer" parent="Panel/Content/AudioSection/AudioBox"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="VibrationText" type="Label" parent="Panel/Content/AudioSection/AudioBox/VibrationRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(105, 30)
+theme_override_colors/font_color = Color(0.18, 0.09, 0.04, 1)
+theme_override_font_sizes/font_size = 16
+text = "Vibrálás: Be"
+vertical_alignment = 1
+
+[node name="VibrationLevel" type="ProgressBar" parent="Panel/Content/AudioSection/AudioBox/VibrationRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 16)
+size_flags_horizontal = 3
+max_value = 100.0
+value = 100.0
+show_percentage = false
+theme_override_styles/background = SubResource("AudioTrack")
+theme_override_styles/fill = SubResource("AudioFill")
+
+[node name="VibrationToggleButton" type="Button" parent="Panel/Content/AudioSection/AudioBox/VibrationRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(58, 40)
+theme_override_constants/icon_max_width = 40
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("GreenIconButton")
+theme_override_styles/hover = SubResource("GreenIconButton")
+theme_override_styles/pressed = SubResource("GreenIconButton")
+icon = ExtResource("14")
+expand_icon = true
+
+[node name="ExitSection" type="PanelContainer" parent="Panel/Content"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("SectionPanel")
+
+[node name="ExitBox" type="VBoxContainer" parent="Panel/Content/ExitSection"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ExitHeader" type="HBoxContainer" parent="Panel/Content/ExitSection/ExitBox"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="ExitIcon" type="TextureRect" parent="Panel/Content/ExitSection/ExitBox/ExitHeader"]
+layout_mode = 2
+custom_minimum_size = Vector2(38, 38)
+texture = ExtResource("15")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ExitTitle" type="Label" parent="Panel/Content/ExitSection/ExitBox/ExitHeader"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.11, 0.055, 1)
+theme_override_font_sizes/font_size = 20
+text = "Kilépés"
+vertical_alignment = 1
+
+[node name="ExitRow" type="GridContainer" parent="Panel/Content/ExitSection/ExitBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 26
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="ScoreboardButton" type="Button" parent="Panel/Content/ExitSection/ExitBox/ExitRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(216, 42)
+theme_override_colors/font_color = Color(0.2, 0.1, 0.05, 1)
+theme_override_constants/icon_max_width = 44
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("ActionButton")
+theme_override_styles/hover = SubResource("ActionButton")
+theme_override_styles/pressed = SubResource("LanguageSelected")
+icon = ExtResource("16")
+expand_icon = true
+text = "Scoreboard        ›"
+
+[node name="TrayExitButton" type="Button" parent="Panel/Content/ExitSection/ExitBox/ExitRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(216, 42)
+theme_override_colors/font_color = Color(0.2, 0.1, 0.05, 1)
+theme_override_constants/icon_max_width = 44
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("ActionButton")
+theme_override_styles/hover = SubResource("ActionButton")
+theme_override_styles/pressed = SubResource("LanguageSelected")
+icon = ExtResource("17")
+expand_icon = true
+text = "Kilépés a táblára     ›"
+
+[node name="HomeExitButton" type="Button" parent="Panel/Content/ExitSection/ExitBox/ExitRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(216, 42)
+theme_override_colors/font_color = Color(0.2, 0.1, 0.05, 1)
+theme_override_constants/icon_max_width = 44
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("ActionButton")
+theme_override_styles/hover = SubResource("ActionButton")
+theme_override_styles/pressed = SubResource("LanguageSelected")
+icon = ExtResource("18")
+expand_icon = true
+text = "Kilépés főmenüre   ›"
+
+[node name="CloseButton2" type="Button" parent="Panel/Content/ExitSection/ExitBox/ExitRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(216, 42)
+theme_override_colors/font_color = Color(0.5, 0.03, 0.025, 1)
+theme_override_constants/icon_max_width = 44
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("RedButton")
+theme_override_styles/hover = SubResource("RedButton")
+theme_override_styles/pressed = SubResource("RedButton")
+icon = ExtResource("19")
+expand_icon = true
+text = "Bezárás            ›"
+
+[node name="MessageLabel" type="Label" parent="Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.34, 0.18, 0.08, 0.92)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1

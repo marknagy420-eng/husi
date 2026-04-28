@@ -1,0 +1,30 @@
+<svg width="160" height="110" viewBox="0 0 160 110" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="12" width="144" height="86" rx="16" fill="#222"/>
+  
+  <clipPath id="flagClipUK">
+    <rect x="10" y="14" width="140" height="82" rx="14"/>
+  </clipPath>
+
+  <g clip-path="url(#flagClipUK)">
+    <!-- Background -->
+    <rect x="10" y="14" width="140" height="82" fill="#012169"/>
+
+    <!-- White diagonals -->
+    <polygon points="10,14 24,14 150,82 150,96 136,96 10,28" fill="#FFFFFF"/>
+    <polygon points="150,14 136,14 10,82 10,96 24,96 150,28" fill="#FFFFFF"/>
+
+    <!-- Red diagonals -->
+    <polygon points="10,14 18,14 150,80 150,88 142,88 10,22" fill="#C8102E"/>
+    <polygon points="150,14 142,14 10,80 10,88 18,88 150,22" fill="#C8102E"/>
+
+    <!-- White cross -->
+    <rect x="66" y="14" width="28" height="82" fill="#FFFFFF"/>
+    <rect x="10" y="45" width="140" height="20" fill="#FFFFFF"/>
+
+    <!-- Red cross -->
+    <rect x="72" y="14" width="16" height="82" fill="#C8102E"/>
+    <rect x="10" y="49" width="140" height="12" fill="#C8102E"/>
+  </g>
+
+  <rect x="10" y="14" width="140" height="82" rx="14" fill="none" stroke="#111" stroke-width="3"/>
+</svg>

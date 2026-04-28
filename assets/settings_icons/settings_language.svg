@@ -1,0 +1,29 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bubbleGrad" x1="0" y1="6" x2="0" y2="58">
+      <stop offset="0%" stop-color="#B9A4FF"/>
+      <stop offset="100%" stop-color="#7B5BD6"/>
+    </linearGradient>
+  </defs>
+
+  <path
+    d="M14 12 H50 C55 12 58 15 58 20 V38 C58 43 55 46 50 46 H30 L20 56 V46 H14 C9 46 6 43 6 38 V20 C6 15 9 12 14 12 Z"
+    fill="url(#bubbleGrad)"
+    stroke="#4B348F"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+
+  <circle cx="24" cy="29" r="3" fill="#FFFFFF"/>
+  <circle cx="32" cy="29" r="3" fill="#FFFFFF"/>
+  <circle cx="40" cy="29" r="3" fill="#FFFFFF"/>
+
+  <path
+    d="M15 15 H49 C53 15 55 17 55 21"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="2"
+    opacity="0.35"
+    stroke-linecap="round"
+  />
+</svg>
