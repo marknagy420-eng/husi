@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/pet/Pet.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/ui_icons/star.png" id="2"]
 
 [sub_resource type="Animation" id="Animation_idle"]
 resource_name = "idle"
@@ -48,10 +49,35 @@ script = ExtResource("1")
 [node name="Sprite2D" type="Sprite2D" parent="."]
 scale = Vector2(0.14, 0.14)
 
+[node name="OverlayContainer" type="Node2D" parent="Sprite2D"]
+
 [node name="ItemSprite" type="Sprite2D" parent="."]
 visible = false
 position = Vector2(78, 36)
 scale = Vector2(0.28, 0.28)
+
+[node name="SparkleRoot" type="Node2D" parent="."]
+
+[node name="SparkleA" type="Sprite2D" parent="SparkleRoot"]
+visible = false
+position = Vector2(-28, -46)
+scale = Vector2(0.22, 0.22)
+texture = ExtResource("2")
+self_modulate = Color(1, 0.95, 0.52, 0)
+
+[node name="SparkleB" type="Sprite2D" parent="SparkleRoot"]
+visible = false
+position = Vector2(24, -74)
+scale = Vector2(0.18, 0.18)
+texture = ExtResource("2")
+self_modulate = Color(1, 0.97, 0.6, 0)
+
+[node name="SparkleC" type="Sprite2D" parent="SparkleRoot"]
+visible = false
+position = Vector2(56, -18)
+scale = Vector2(0.16, 0.16)
+texture = ExtResource("2")
+self_modulate = Color(1, 0.98, 0.7, 0)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {

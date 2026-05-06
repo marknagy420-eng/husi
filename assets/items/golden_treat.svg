@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe983"/>
+      <stop offset="100%" stop-color="#f2a21b"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#7e4f13" flood-opacity="0.32"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <circle cx="78" cy="92" r="28" fill="url(#gold)" stroke="#d18514" stroke-width="6"/>
+    <circle cx="122" cy="70" r="24" fill="url(#gold)" stroke="#d18514" stroke-width="6"/>
+    <circle cx="168" cy="70" r="24" fill="url(#gold)" stroke="#d18514" stroke-width="6"/>
+    <circle cx="178" cy="116" r="28" fill="url(#gold)" stroke="#d18514" stroke-width="6"/>
+    <path d="M60 120c0-36 30-66 68-66s68 30 68 66c0 46-30 82-68 82s-68-36-68-82z" fill="url(#gold)" stroke="#d18514" stroke-width="6"/>
+    <path d="M92 128c0-22 16-38 36-38s36 16 36 38c0 25-16 44-36 44s-36-19-36-44z" fill="#df8f14"/>
+    <path d="M128 92l7 18 20 1-16 11 6 19-17-10-17 10 6-19-16-11 20-1z" fill="#fff4ba"/>
+  </g>
+</svg>

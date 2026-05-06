@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="wood" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6c774"/>
+      <stop offset="100%" stop-color="#cf7b2a"/>
+    </linearGradient>
+  </defs>
+  <path d="M42 124L128 54l86 70" fill="none" stroke="#8d4f21" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 116h124v92H66z" fill="url(#wood)" stroke="#8d4f21" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M110 146h36v62h-36z" fill="#f9e5bb" stroke="#8d4f21" stroke-width="10" stroke-linejoin="round"/>
+  <circle cx="137" cy="178" r="5" fill="#8d4f21"/>
+</svg>

@@ -2,6 +2,9 @@ extends Control
 
 signal coins_earned(amount: int)
 signal quit_requested
+signal run_finished(score: int)
+
+const Localization = preload("res://scripts/core/Localization.gd")
 
 const GRAVITY := 0.35
 const JUMP_POWER := -12.0
@@ -18,7 +21,7 @@ const VIRTUAL_COIN_STEP := 15
 const VIRTUAL_COIN_REWARD := 15
 const JET_PLATFORM_CHANCE := 0.08
 const BROKEN_PLATFORM_CHANCE := 0.16
-const PLAYER_SIZE := 50.0
+const PLAYER_SIZE := 100.0
 
 @onready var background: TextureRect = %Background
 @onready var hud_label: Label = %HudLabel
@@ -47,11 +50,14 @@ var level := 1
 var last_landed_platform_id := -1
 var is_running := false
 var is_paused := false
+var run_reported := false
 var pointer_control_active := false
 var pointer_start_x := 0.0
 var pointer_start_player_x := 0.0
 var last_background_path := "res://ezkellneked.jpg"
 var last_player_texture_path := "res://karakter.png"
+var current_language := "hu"
+var effects_volume_percent := 100.0
 
 func _ready() -> void:
 	set_process(false)
@@ -61,18 +67,28 @@ func _ready() -> void:
 	game_over_panel.visible = false
 	notice_label.visible = false
 	%BackButton.visible = false
+	_apply_localized_text()
+	_apply_effects_volume()
+
+func set_localization(language_code: String) -> void:
+	current_language = language_code
+	_apply_localized_text()
+
+func set_effects_volume(volume_percent: float) -> void:
+	effects_volume_percent = volume_percent
+	_apply_effects_volume()
 
 func start_game(_click_reward: int, background_path: String = "res://ezkellneked.jpg", pet_texture_path: String = "res://karakter.png") -> void:
 	last_background_path = background_path
 	last_player_texture_path = pet_texture_path
 	background.texture = load(background_path)
 	player_texture = load(pet_texture_path)
-	%PauseButton.text = "Pause"
 	%BackButton.visible = false
 	game_over_panel.visible = false
 	notice_label.visible = false
 	is_running = true
 	is_paused = false
+	run_reported = false
 	var game_size := _get_game_size()
 	jump_count = 0
 	run_score = 0
@@ -85,6 +101,7 @@ func start_game(_click_reward: int, background_path: String = "res://ezkellneked
 		"vy": 0.0
 	}
 	_create_platforms()
+	_apply_localized_text()
 	_update_hud()
 	set_process(true)
 	queue_redraw()
@@ -230,13 +247,13 @@ func _score_landing(platform_id: int) -> void:
 
 	if jump_count % VIRTUAL_COIN_STEP == 0:
 		_add_run_coins(VIRTUAL_COIN_REWARD)
-		_show_notice("+%d virtual coins" % VIRTUAL_COIN_REWARD)
+		_show_notice(Localization.text(current_language, "minigame.virtual_coins", {"amount": VIRTUAL_COIN_REWARD}))
 
 	var previous_level := level
 	level = int(floor(float(jump_count) / float(LEVEL_JUMP_STEP))) + 1
 	if level > previous_level:
 		level_sound.play()
-		_show_notice("LEVEL %d!" % level)
+		_show_notice(Localization.text(current_language, "minigame.level_up"))
 
 	jump_sound.play()
 	_update_hud()
@@ -276,7 +293,7 @@ func _update_collectables() -> void:
 			jet["collected"] = true
 			player["vy"] = min(float(player["vy"]), JUMP_POWER * 2.05)
 			jump_sound.play()
-			_show_notice("JET BOOST!")
+			_show_notice(Localization.text(current_language, "minigame.jet_boost"))
 
 func _add_run_coins(amount: int) -> void:
 	run_score += amount
@@ -480,7 +497,7 @@ func _get_game_size() -> Vector2:
 	return get_viewport_rect().size
 
 func _update_hud() -> void:
-	hud_label.text = "Level %d - Score: %d" % [level, run_score]
+	hud_label.text = Localization.text(current_language, "minigame.level_score", {"level": level, "score": run_score})
 
 func _show_notice(message: String) -> void:
 	notice_label.text = message
@@ -492,6 +509,7 @@ func _show_notice(message: String) -> void:
 func _game_over() -> void:
 	is_running = false
 	set_process(false)
+	_report_run_finished()
 	game_over_panel.visible = true
 	%BackButton.visible = true
 	notice_label.visible = false
@@ -503,12 +521,37 @@ func _on_pause_button_pressed() -> void:
 	if not is_running:
 		return
 	is_paused = not is_paused
-	%PauseButton.text = "Resume" if is_paused else "Pause"
+	%PauseButton.text = Localization.text(current_language, "minigame.resume" if is_paused else "minigame.pause")
 	%BackButton.visible = is_paused
-	notice_label.text = "PAUSE"
+	notice_label.text = Localization.text(current_language, "minigame.pause")
 	notice_label.visible = is_paused
 
 func _on_back_button_pressed() -> void:
 	is_running = false
 	set_process(false)
+	_report_run_finished()
 	quit_requested.emit()
+
+func _apply_localized_text() -> void:
+	%PauseButton.text = Localization.text(current_language, "minigame.pause" if not is_paused else "minigame.resume")
+	$GameOverPanel/GameOverContent/GameOverTitle.text = Localization.text(current_language, "minigame.game_over")
+	%RestartButton.text = Localization.text(current_language, "minigame.restart")
+	%BackButton.text = Localization.text(current_language, "minigame.back")
+	_update_hud()
+
+func _apply_effects_volume() -> void:
+	var db := _volume_percent_to_db(effects_volume_percent)
+	jump_sound.volume_db = db
+	coin_sound.volume_db = db
+	level_sound.volume_db = db
+
+func _volume_percent_to_db(volume_percent: float) -> float:
+	if volume_percent <= 0.0:
+		return -80.0
+	return linear_to_db(volume_percent / 100.0)
+
+func _report_run_finished() -> void:
+	if run_reported:
+		return
+	run_reported = true
+	run_finished.emit(run_score)

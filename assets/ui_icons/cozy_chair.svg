@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="chair" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#76c8ff"/>
+      <stop offset="100%" stop-color="#3570d4"/>
+    </linearGradient>
+  </defs>
+  <path d="M74 66c0-14 12-26 26-26h56c14 0 26 12 26 26v46H74z" fill="url(#chair)" stroke="#22539d" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M54 112c0-14 12-26 26-26h96c14 0 26 12 26 26v36c0 18-14 32-32 32H86c-18 0-32-14-32-32z" fill="#5aa1ef" stroke="#22539d" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M76 178l-10 38M180 178l10 38M106 178v38M150 178v38" stroke="#22539d" stroke-width="10" stroke-linecap="round"/>
+</svg>
