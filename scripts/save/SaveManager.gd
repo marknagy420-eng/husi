@@ -13,7 +13,14 @@ var default_data := {
 	"owned_items": ["default"],
 	"selected_skin": "default",
 	"owned_backgrounds": ["default"],
-	"selected_background": "default"
+	"selected_background": "default",
+	"daily_deal_claimed_on": "",
+	"language_code": "hu",
+	"master_volume": 100.0,
+	"effects_volume": 100.0,
+	"best_score": 0,
+	"cleanliness": 100.0,
+	"last_cleanliness_timestamp": 0
 }
 
 func load_game() -> Dictionary:

@@ -479,15 +479,13 @@ theme_override_font_sizes/font_size = 16
 text = "Hang: Be"
 vertical_alignment = 1
 
-[node name="SoundLevel" type="ProgressBar" parent="Panel/Content/AudioSection/AudioBox/SoundRow"]
+[node name="SoundLevel" type="HSlider" parent="Panel/Content/AudioSection/AudioBox/SoundRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 16)
+custom_minimum_size = Vector2(0, 22)
 size_flags_horizontal = 3
 max_value = 100.0
 value = 100.0
-show_percentage = false
-theme_override_styles/background = SubResource("AudioTrack")
-theme_override_styles/fill = SubResource("AudioFill")
+step = 1.0
 
 [node name="SoundToggleButton" type="Button" parent="Panel/Content/AudioSection/AudioBox/SoundRow"]
 unique_name_in_owner = true
@@ -514,15 +512,13 @@ theme_override_font_sizes/font_size = 16
 text = "Vibrálás: Be"
 vertical_alignment = 1
 
-[node name="VibrationLevel" type="ProgressBar" parent="Panel/Content/AudioSection/AudioBox/VibrationRow"]
+[node name="VibrationLevel" type="HSlider" parent="Panel/Content/AudioSection/AudioBox/VibrationRow"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 16)
+custom_minimum_size = Vector2(0, 22)
 size_flags_horizontal = 3
 max_value = 100.0
 value = 100.0
-show_percentage = false
-theme_override_styles/background = SubResource("AudioTrack")
-theme_override_styles/fill = SubResource("AudioFill")
+step = 1.0
 
 [node name="VibrationToggleButton" type="Button" parent="Panel/Content/AudioSection/AudioBox/VibrationRow"]
 unique_name_in_owner = true
